@@ -184,28 +184,163 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     def async_get_options_flow(config_entry: Any) -> OptionsFlow:
         """Return the options flow."""
-        return FlameKingOptionsFlow(config_entry)
+        return FlameKingOptionsFlow()
 
 
 class FlameKingOptionsFlow(OptionsFlow):
     """Configure scale calibration and tank properties."""
 
-    def __init__(self, config_entry: Any) -> None:
-        """Initialize options."""
-        self._config_entry = config_entry
+    def __init__(self) -> None:
+        """Initialize the guided calibration state."""
+        self._captured_raw_zero: int | None = None
+
+    def _current_options(self) -> dict[str, Any]:
+        """Return a complete mutable copy of the current options."""
+        return {**DEFAULT_OPTIONS, **self.config_entry.options}
+
+    def _live_raw(self) -> int | None:
+        """Return the current live raw reading when the scale is connected."""
+        manager = self.config_entry.runtime_data
+        if not manager.available or manager.packet is None:
+            return None
+        return manager.packet.raw
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Manage integration options."""
+        """Show the scale configuration menu."""
+        return self.async_show_menu(
+            step_id="init",
+            menu_options=["tank", "calibrate", "advanced"],
+        )
+
+    async def async_step_tank(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Configure cylinder tare weight and propane capacity."""
+        current = self._current_options()
+        if user_input is not None:
+            current.update(user_input)
+            return self.async_create_entry(title="", data=current)
+
+        positive = NumberSelector(NumberSelectorConfig(min=0.01, max=500, step=0.01))
+        return self.async_show_form(
+            step_id="tank",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_TARE_WEIGHT, default=current[CONF_TARE_WEIGHT]
+                    ): positive,
+                    vol.Required(
+                        CONF_CAPACITY, default=current[CONF_CAPACITY]
+                    ): positive,
+                }
+            ),
+        )
+
+    async def async_step_calibrate(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Capture the unloaded scale reading."""
         errors: dict[str, str] = {}
+        if user_input is not None:
+            raw = self._live_raw()
+            if raw is None:
+                errors["base"] = "no_live_reading"
+            else:
+                self._captured_raw_zero = raw
+                return self.async_show_menu(
+                    step_id="calibration_reference",
+                    menu_options=["calibrate_empty_tank", "calibrate_known_weight"],
+                )
+
+        live_raw = self._live_raw()
+        return self.async_show_form(
+            step_id="calibrate",
+            data_schema=vol.Schema({}),
+            errors=errors,
+            description_placeholders={
+                "raw": str(live_raw) if live_raw is not None else "unavailable"
+            },
+        )
+
+    async def async_step_calibrate_empty_tank(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Capture a reference reading using the configured empty cylinder."""
+        return await self._async_capture_reference(user_input)
+
+    async def async_step_calibrate_known_weight(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Capture a reference reading using a user-supplied known weight."""
+        return await self._async_capture_reference(user_input, request_weight=True)
+
+    async def _async_capture_reference(
+        self,
+        user_input: dict[str, Any] | None,
+        *,
+        request_weight: bool = False,
+    ) -> ConfigFlowResult:
+        """Capture and save the loaded calibration point."""
+        if self._captured_raw_zero is None:
+            return await self.async_step_calibrate()
+
+        current = self._current_options()
+        errors: dict[str, str] = {}
+        reference_weight = float(current[CONF_TARE_WEIGHT])
+        if request_weight and user_input is not None:
+            reference_weight = float(user_input[CONF_REFERENCE_WEIGHT])
+
+        if user_input is not None:
+            raw_reference = self._live_raw()
+            if raw_reference is None:
+                errors["base"] = "no_live_reading"
+            elif raw_reference == self._captured_raw_zero:
+                errors["base"] = "same_calibration_points"
+            else:
+                current.update(
+                    {
+                        CONF_RAW_ZERO: self._captured_raw_zero,
+                        CONF_RAW_REFERENCE: raw_reference,
+                        CONF_REFERENCE_WEIGHT: reference_weight,
+                    }
+                )
+                return self.async_create_entry(title="", data=current)
+
+        schema: dict[Any, Any] = {}
+        if request_weight:
+            schema[vol.Required(CONF_REFERENCE_WEIGHT)] = NumberSelector(
+                NumberSelectorConfig(min=0.01, max=500, step=0.01)
+            )
+
+        live_raw = self._live_raw()
+        step_id = (
+            "calibrate_known_weight" if request_weight else "calibrate_empty_tank"
+        )
+        return self.async_show_form(
+            step_id=step_id,
+            data_schema=vol.Schema(schema),
+            errors=errors,
+            description_placeholders={
+                "raw": str(live_raw) if live_raw is not None else "unavailable",
+                "tare": f"{reference_weight:.2f}",
+            },
+        )
+
+    async def async_step_advanced(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manually configure calibration values for diagnostics."""
+        errors: dict[str, str] = {}
+        current = self._current_options()
         if user_input is not None:
             if user_input[CONF_RAW_ZERO] == user_input[CONF_RAW_REFERENCE]:
                 errors["base"] = "same_calibration_points"
             else:
-                return self.async_create_entry(title="", data=user_input)
+                current.update(user_input)
+                return self.async_create_entry(title="", data=current)
 
-        current = {**DEFAULT_OPTIONS, **self._config_entry.options}
         positive = NumberSelector(NumberSelectorConfig(min=0.01, max=500, step=0.01))
         raw = NumberSelector(NumberSelectorConfig(min=0, max=65535, step=1))
         schema = vol.Schema(
@@ -217,12 +352,8 @@ class FlameKingOptionsFlow(OptionsFlow):
                 vol.Required(
                     CONF_REFERENCE_WEIGHT, default=current[CONF_REFERENCE_WEIGHT]
                 ): positive,
-                vol.Required(
-                    CONF_TARE_WEIGHT, default=current[CONF_TARE_WEIGHT]
-                ): positive,
-                vol.Required(CONF_CAPACITY, default=current[CONF_CAPACITY]): positive,
             }
         )
         return self.async_show_form(
-            step_id="init", data_schema=schema, errors=errors
+            step_id="advanced", data_schema=schema, errors=errors
         )

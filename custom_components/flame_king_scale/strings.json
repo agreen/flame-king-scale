@@ -35,19 +35,65 @@
   },
   "options": {
     "error": {
+      "no_live_reading": "No live reading is available. Turn on the scale, make sure no other app is connected, and try again.",
       "same_calibration_points": "Raw zero and raw reference must be different."
     },
     "step": {
       "init": {
+        "menu_options": {
+          "advanced": "Advanced manual calibration",
+          "calibrate": "Guided scale calibration",
+          "tank": "Tank settings"
+        },
+        "menu_option_descriptions": {
+          "advanced": "View or enter the raw calibration values directly.",
+          "calibrate": "Capture zero and a known weight directly from the connected scale.",
+          "tank": "Set the cylinder's stamped tare weight and propane capacity."
+        },
+        "title": "Configure propane scale"
+      },
+      "tank": {
         "data": {
           "capacity_lb": "Propane capacity (lb)",
-          "raw_reference": "Raw reading with reference weight",
-          "raw_zero": "Raw reading with empty scale",
-          "reference_weight_lb": "Known reference weight (lb)",
           "tare_weight_lb": "Cylinder stamped tare weight (lb)"
         },
-        "description": "Use the Raw scale reading entity to collect the empty and known-weight calibration points. Enter the cylinder's stamped TW, not an estimate.",
-        "title": "Calibration and tank"
+        "description": "Enter the cylinder's stamped TW, not an estimate. A typical 20 lb grill cylinder may use an 18 lb tare, but the cylinder stamp is authoritative.",
+        "title": "Tank settings"
+      },
+      "calibrate": {
+        "description": "Turn on the scale, remove the cylinder and every other load, and wait for it to settle. Then submit to capture zero automatically. Current raw reading: {raw}.",
+        "title": "Step 1: Capture empty scale"
+      },
+      "calibration_reference": {
+        "menu_options": {
+          "calibrate_empty_tank": "Use a confirmed-empty cylinder",
+          "calibrate_known_weight": "Use another known weight"
+        },
+        "menu_option_descriptions": {
+          "calibrate_empty_tank": "Use the configured stamped tare weight as the known load.",
+          "calibrate_known_weight": "Enter the weight of another accurately known load."
+        },
+        "title": "Step 2: Choose a reference weight"
+      },
+      "calibrate_empty_tank": {
+        "description": "Place the confirmed-empty cylinder on the scale, disconnected from hoses or accessories, and wait for the reading to settle. Its configured tare weight of {tare} lb will be used automatically. Current raw reading: {raw}.",
+        "title": "Capture empty cylinder"
+      },
+      "calibrate_known_weight": {
+        "data": {
+          "reference_weight_lb": "Actual known weight (lb)"
+        },
+        "description": "Place an accurately known weight on the scale and wait for the reading to settle. Enter only its real weight; the raw reading is captured automatically. Current raw reading: {raw}.",
+        "title": "Capture known weight"
+      },
+      "advanced": {
+        "data": {
+          "raw_reference": "Raw reading with reference weight",
+          "raw_zero": "Raw reading with empty scale",
+          "reference_weight_lb": "Known reference weight (lb)"
+        },
+        "description": "Diagnostic fallback for manually entering the two raw calibration points. Guided calibration is recommended.",
+        "title": "Advanced manual calibration"
       }
     }
   },

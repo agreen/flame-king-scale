@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## 0.4.0
+
+- Add guided two-point calibration that captures live raw readings from the
+  connected scale.
+- Support a confirmed-empty, disconnected cylinder as the reference load using
+  its configured stamped tare weight.
+- Separate tank settings from calibration and disable manual calibration-number
+  entities by default.
+
 ## 0.3.1
 
 - Use 18 lb as the suggested tare weight for a standard 20 lb cylinder. The

@@ -19,10 +19,10 @@ six-byte weight packets.
 - Battery
 - Raw scale reading (for calibration and troubleshooting)
 
-The scale device also exposes configuration-number entities for tare weight,
-propane capacity, reference weight, raw zero, and raw reference. These appear in
-the **Configuration** section of the device page and can be changed or automated
-without reopening the integration setup flow.
+The scale device exposes configuration-number entities for tare weight and
+propane capacity. Guided calibration captures raw readings directly from the
+scale; its manual calibration entities are disabled by default and remain
+available for diagnostics.
 
 ## Requirements
 
@@ -64,15 +64,18 @@ Manual installation is also supported: copy
    notification characteristic before accepting scale packets. The discovery
    wizard lets you name the scale, assign its room, and enter the cylinder's
    stamped tare weight and propane capacity before setup finishes.
-2. Keep the empty scale unloaded and note the **Raw scale reading**.
-3. Put a known weight on the scale and note the new raw reading.
-4. Open the scale's device page and use its **Configuration** entities (or open
-   the integration's **Configure** dialog) to enter:
-   - raw zero reading;
-   - raw reference reading;
-   - known reference weight in pounds;
-   - the cylinder's stamped tare weight (`TW`) in pounds;
-   - propane capacity (normally 20 lb for a grill cylinder).
+2. Open the integration's **Configure** dialog and choose **Tank settings**.
+   Enter the cylinder's stamped tare weight (`TW`) and its propane capacity
+   (normally 20 lb for a grill cylinder).
+3. Choose **Guided scale calibration**. With the scale unloaded, capture zero.
+4. Add a reference load and capture it when the reading settles. You can use:
+   - a confirmed-empty cylinder, disconnected from hoses and accessories; its
+     configured stamped tare weight is used automatically; or
+   - another accurately known weight entered in pounds.
+
+The guided flow reads both raw values from the connected scale. **Advanced
+manual calibration** is available for diagnostics, but normal setup never
+requires copying raw sensor readings.
 
 The propane calculation is:
 

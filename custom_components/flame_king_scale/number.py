@@ -60,6 +60,7 @@ NUMBER_DESCRIPTIONS = (
         native_step=0.01,
         native_unit_of_measurement=UnitOfMass.POUNDS,
         icon="mdi:weight-kilogram",
+        entity_registry_enabled_default=False,
     ),
     FlameKingNumberDescription(
         key="raw_zero",
@@ -69,6 +70,7 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=65535,
         native_step=1,
         icon="mdi:ray-start-arrow",
+        entity_registry_enabled_default=False,
     ),
     FlameKingNumberDescription(
         key="raw_reference",
@@ -78,6 +80,7 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=65535,
         native_step=1,
         icon="mdi:ray-end-arrow",
+        entity_registry_enabled_default=False,
     ),
 )
 
