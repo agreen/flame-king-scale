@@ -1,0 +1,27 @@
+# Changelog
+
+All notable changes to this project are documented here.
+
+## 0.3.0
+
+- Add a first-run wizard for scale name, room, cylinder tare weight, and propane
+  capacity.
+- Add writable configuration entities for tank and calibration values.
+- Classify the raw scale reading as a diagnostic entity.
+- Add local Home Assistant brand assets and HACS/Hassfest validation.
+- Preserve the Bluetooth connection while configuration values change.
+
+## 0.2.1
+
+- Fix sensor registration on current Home Assistant releases.
+- Fix the Bluetooth confirmation translation placeholder.
+
+## 0.2.0
+
+- Add address-free active Bluetooth discovery for devices named `Gas Monitor`.
+- Validate the `FFE0` service and `FFE4` notification characteristic on
+  connection.
+
+## 0.1.0
+
+- Initial Flame King YSNPS1 Bluetooth integration.

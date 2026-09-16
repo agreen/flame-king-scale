@@ -3,9 +3,14 @@ name: Validate
 on:
   push:
   pull_request:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions: {}
 
 jobs:
-  validate:
+  lint-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,7 +20,17 @@ jobs:
       - run: pip install ruff
       - run: ruff check .
       - run: PYTHONPATH=custom_components/flame_king_scale python -m unittest discover -s tests
+
+  validate-hacs:
+    runs-on: ubuntu-latest
+    steps:
       - name: HACS validation
         uses: hacs/action@main
         with:
           category: integration
+
+  validate-hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master

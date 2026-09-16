@@ -1,5 +1,8 @@
 # Flame King Propane Scale for Home Assistant
 
+[![Validation](https://github.com/agreen/flame-king-scale/actions/workflows/validate.yml/badge.svg)](https://github.com/agreen/flame-king-scale/actions/workflows/validate.yml)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=agreen&repository=flame-king-scale&category=integration)
+
 A HACS-compatible Home Assistant custom integration for the stock Bluetooth
 electronics in the Flame King YSNPS1 propane tank scale.
 
@@ -30,9 +33,15 @@ without reopening the integration setup flow.
 Only one Bluetooth client can connect to the scale at a time. Fully close the
 Flame King app and nRF Connect before Home Assistant connects.
 
+Home Assistant automatically chooses the nearest configured Bluetooth adapter
+or connectable ESPHome proxy that can reach the scale. There is no adapter
+selection field to configure or maintain.
+
 ## Install with HACS
 
 Until this repository is included in the default HACS catalog:
+
+[![Open your Home Assistant instance and add this repository to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=agreen&repository=flame-king-scale&category=integration)
 
 1. In HACS, open **Integrations**.
 2. Open the menu and choose **Custom repositories**.
