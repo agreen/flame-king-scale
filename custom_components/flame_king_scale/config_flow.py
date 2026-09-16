@@ -76,7 +76,10 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
                 data={CONF_ADDRESS: self._address},
                 options=DEFAULT_OPTIONS,
             )
-        return self.async_show_form(step_id="bluetooth_confirm")
+        return self.async_show_form(
+            step_id="bluetooth_confirm",
+            description_placeholders={"name": self._name},
+        )
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None

@@ -6,7 +6,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfMass
 from homeassistant.core import HomeAssistant, callback
@@ -29,14 +33,9 @@ from .protocol import TankState, calculate_tank_state
 
 
 @dataclass(frozen=True, kw_only=True)
-class FlameKingSensorDescription:
+class FlameKingSensorDescription(SensorEntityDescription):
     """Describe a Flame King sensor."""
 
-    key: str
-    translation_key: str
-    native_unit_of_measurement: str | None
-    device_class: SensorDeviceClass | None
-    icon: str | None
     value_fn: Callable[[FlameKingSensor], int | float | None]
 
 
@@ -108,6 +107,7 @@ async def async_setup_entry(
 class FlameKingSensor(SensorEntity):
     """A sensor backed by Flame King Bluetooth notifications."""
 
+    entity_description: FlameKingSensorDescription
     _attr_has_entity_name = True
 
     def __init__(
