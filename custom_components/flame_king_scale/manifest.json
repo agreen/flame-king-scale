@@ -1,0 +1,18 @@
+{
+  "domain": "flame_king_scale",
+  "name": "Flame King Propane Scale",
+  "bluetooth": [
+    {
+      "local_name": "Gas Monitor"
+    }
+  ],
+  "codeowners": ["@agreen"],
+  "config_flow": true,
+  "dependencies": ["bluetooth"],
+  "documentation": "https://github.com/agreen/flame-king-scale",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/agreen/flame-king-scale/issues",
+  "requirements": ["bleak-retry-connector>=3.10.0"],
+  "version": "0.1.0"
+}

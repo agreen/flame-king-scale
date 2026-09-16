@@ -1,0 +1,52 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "This Flame King scale is already configured."
+    },
+    "step": {
+      "bluetooth_confirm": {
+        "description": "Set up the discovered Flame King propane scale {name}?",
+        "title": "Flame King propane scale discovered"
+      },
+      "confirm": {
+        "description": "Set up the discovered Flame King propane scale?",
+        "title": "Flame King propane scale discovered"
+      },
+      "user": {
+        "data": {
+          "address": "Bluetooth address",
+          "name": "Name"
+        },
+        "description": "Enter the Bluetooth address printed by a scanner such as nRF Connect.",
+        "title": "Add Flame King propane scale"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "same_calibration_points": "Raw zero and raw reference must be different."
+    },
+    "step": {
+      "init": {
+        "data": {
+          "capacity_lb": "Propane capacity (lb)",
+          "raw_reference": "Raw reading with reference weight",
+          "raw_zero": "Raw reading with empty scale",
+          "reference_weight_lb": "Known reference weight (lb)",
+          "tare_weight_lb": "Cylinder stamped tare weight (lb)"
+        },
+        "description": "Use the Raw scale reading entity to collect the empty and known-weight calibration points. Enter the cylinder's stamped TW, not an estimate.",
+        "title": "Calibration and tank"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {"name": "Battery"},
+      "gross_weight": {"name": "Gross weight"},
+      "propane_percent": {"name": "Propane remaining"},
+      "propane_weight": {"name": "Propane weight"},
+      "raw": {"name": "Raw scale reading"}
+    }
+  }
+}
