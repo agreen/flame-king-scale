@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## 0.3.1
+
+- Use 18 lb as the suggested tare weight for a standard 20 lb cylinder. The
+  cylinder's stamped `TW` value remains authoritative and can be changed during
+  setup or from the device page.
+
 ## 0.3.0
 
 - Add a first-run wizard for scale name, room, cylinder tare weight, and propane

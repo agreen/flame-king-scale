@@ -25,7 +25,7 @@ CONF_CAPACITY: Final = "capacity_lb"
 DEFAULT_RAW_ZERO: Final = 0
 DEFAULT_RAW_REFERENCE: Final = 1600
 DEFAULT_REFERENCE_WEIGHT: Final = 13.2277  # 6 kg, a published example point.
-DEFAULT_TARE_WEIGHT: Final = 17.0
+DEFAULT_TARE_WEIGHT: Final = 18.0
 DEFAULT_CAPACITY: Final = 20.0
 
 DEFAULT_OPTIONS: Final = {
