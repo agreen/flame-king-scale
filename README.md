@@ -33,7 +33,7 @@ Until this repository is included in the default HACS catalog:
 2. Open the menu and choose **Custom repositories**.
 3. Add this repository URL and choose **Integration**.
 4. Install **Flame King Propane Scale** and restart Home Assistant.
-5. Turn on the scale. Home Assistant should discover `Gas Monitor`.
+5. Turn on the scale. Home Assistant should discover `Gas Monitor` automatically.
 
 Manual installation is also supported: copy
 `custom_components/flame_king_scale` into Home Assistant's
@@ -42,8 +42,12 @@ Manual installation is also supported: copy
 ## Set up and calibrate
 
 1. Go to **Settings → Devices & services** and accept the discovered Flame King
-   scale. If discovery does not appear, choose **Add integration**, search for
-   **Flame King Propane Scale**, and enter the scale's Bluetooth address.
+   scale. If discovery does not appear, choose **Add integration** and search for
+   **Flame King Propane Scale**. The setup flow performs an active scan and finds
+   the scale; it never asks you to type a Bluetooth address. Candidates must use
+   the exact `Gas Monitor` name and, when advertised, the `FFE0` service UUID.
+   On connection the integration verifies the `FFE0` service and `FFE4`
+   notification characteristic before accepting scale packets.
 2. Keep the empty scale unloaded and note the **Raw scale reading**.
 3. Put a known weight on the scale and note the new raw reading.
 4. Open the integration's **Configure** dialog and enter:

@@ -1,20 +1,23 @@
 {
   "config": {
     "abort": {
-      "already_configured": "This Flame King scale is already configured."
+      "already_configured": "This Flame King scale is already configured.",
+      "not_supported": "The discovered Bluetooth device does not match a supported Flame King scale."
+    },
+    "error": {
+      "no_devices_found": "No supported Flame King scale was found. Turn on the scale, close any app connected to it, and scan again."
     },
     "step": {
-      "confirm": {
-        "description": "Set up the discovered Flame King propane scale?",
+      "bluetooth_confirm": {
+        "description": "Set up the discovered Flame King propane scale {name}?",
         "title": "Flame King propane scale discovered"
       },
       "user": {
         "data": {
-          "address": "Bluetooth address",
-          "name": "Name"
+          "device": "Discovered scale"
         },
-        "description": "Enter the Bluetooth address printed by a scanner such as nRF Connect.",
-        "title": "Add Flame King propane scale"
+        "description": "Home Assistant actively scans for a Gas Monitor advertisement and validates its Flame King Bluetooth fingerprint. No address entry is required. Submit to scan again.",
+        "title": "Find Flame King propane scale"
       }
     }
   },

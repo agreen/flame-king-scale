@@ -13,6 +13,7 @@ SERVICE_UUID: Final = "0000ffe0-0000-1000-8000-00805f9b34fb"
 CHARACTERISTIC_UUID: Final = "0000ffe4-0000-1000-8000-00805f9b34fb"
 
 CONF_ADDRESS: Final = "address"
+CONF_DEVICE: Final = "device"
 CONF_RAW_ZERO: Final = "raw_zero"
 CONF_RAW_REFERENCE: Final = "raw_reference"
 CONF_REFERENCE_WEIGHT: Final = "reference_weight_lb"

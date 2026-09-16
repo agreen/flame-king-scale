@@ -12,7 +12,7 @@ from bleak_retry_connector import BleakClientWithServiceCache, establish_connect
 from homeassistant.components.bluetooth import async_ble_device_from_address
 from homeassistant.core import HomeAssistant, callback
 
-from .const import CHARACTERISTIC_UUID, DEVICE_NAME
+from .const import CHARACTERISTIC_UUID, DEVICE_NAME, SERVICE_UUID
 from .protocol import InvalidPacketError, ScalePacket, decode_packet
 
 _LOGGER = logging.getLogger(__name__)
@@ -102,8 +102,17 @@ class FlameKingBluetoothManager:
                     DEVICE_NAME,
                     self._disconnected_callback,
                 )
+                service = self._client.services.get_service(SERVICE_UUID)
+                characteristic = self._client.services.get_characteristic(
+                    CHARACTERISTIC_UUID
+                )
+                if service is None or characteristic is None:
+                    raise ValueError(
+                        "Bluetooth device does not expose the Flame King "
+                        "FFE0/FFE4 GATT fingerprint"
+                    )
                 await self._client.start_notify(
-                    CHARACTERISTIC_UUID, self._notification_handler
+                    characteristic, self._notification_handler
                 )
                 retry_delay = 5
                 await self._wait_for_disconnect_or_stop()

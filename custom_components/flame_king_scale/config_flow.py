@@ -5,14 +5,20 @@ from __future__ import annotations
 from typing import Any
 
 import voluptuous as vol
+from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
-from homeassistant.const import CONF_NAME
-from homeassistant.helpers.selector import NumberSelector, NumberSelectorConfig
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    SelectSelector,
+    SelectSelectorConfig,
+)
 
 from .const import (
     CONF_ADDRESS,
     CONF_CAPACITY,
+    CONF_DEVICE,
     CONF_RAW_REFERENCE,
     CONF_RAW_ZERO,
     CONF_REFERENCE_WEIGHT,
@@ -20,7 +26,9 @@ from .const import (
     DEFAULT_OPTIONS,
     DEVICE_NAME,
     DOMAIN,
+    SERVICE_UUID,
 )
+from .discovery import is_flame_king_candidate
 
 
 class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -32,19 +40,33 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
         """Initialize config flow state."""
         self._address: str | None = None
         self._name = DEVICE_NAME
+        self._discovered: dict[str, BluetoothServiceInfoBleak] = {}
 
-    async def async_step_bluetooth(
+    async def _async_set_discovered_device(
         self, discovery_info: BluetoothServiceInfoBleak
     ) -> ConfigFlowResult:
-        """Handle Bluetooth discovery."""
+        """Store a discovered candidate and continue to confirmation."""
         await self.async_set_unique_id(discovery_info.address)
         self._abort_if_unique_id_configured()
         self._address = discovery_info.address
         self._name = discovery_info.name or DEVICE_NAME
         self.context["title_placeholders"] = {"name": self._name}
-        return await self.async_step_confirm()
+        return await self.async_step_bluetooth_confirm()
 
-    async def async_step_confirm(
+    async def async_step_bluetooth(
+        self, discovery_info: BluetoothServiceInfoBleak
+    ) -> ConfigFlowResult:
+        """Handle Bluetooth discovery."""
+        if not is_flame_king_candidate(
+            discovery_info.name,
+            discovery_info.service_uuids,
+            device_name=DEVICE_NAME,
+            service_uuid=SERVICE_UUID,
+        ):
+            return self.async_abort(reason="not_supported")
+        return await self._async_set_discovered_device(discovery_info)
+
+    async def async_step_bluetooth_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Confirm discovered device setup."""
@@ -54,29 +76,65 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
                 data={CONF_ADDRESS: self._address},
                 options=DEFAULT_OPTIONS,
             )
-        return self.async_show_form(step_id="confirm")
+        return self.async_show_form(step_id="bluetooth_confirm")
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Allow setup by Bluetooth address when discovery is unavailable."""
-        if user_input is not None:
-            address = user_input[CONF_ADDRESS].upper()
-            await self.async_set_unique_id(address)
-            self._abort_if_unique_id_configured()
-            return self.async_create_entry(
-                title=user_input.get(CONF_NAME, DEVICE_NAME),
-                data={CONF_ADDRESS: address},
-                options=DEFAULT_OPTIONS,
+        """Actively scan for supported scales without asking for an address."""
+        if user_input is not None and CONF_DEVICE in user_input:
+            return await self._async_set_discovered_device(
+                self._discovered[user_input[CONF_DEVICE]]
             )
 
-        schema = vol.Schema(
+        await bluetooth.async_request_active_scan(self.hass)
+        configured = {
+            entry.unique_id
+            for entry in self._async_current_entries()
+            if entry.unique_id
+        }
+        candidates = {
+            info.address: info
+            for info in bluetooth.async_discovered_service_info(
+                self.hass, connectable=True
+            )
+            if info.address not in configured
+            and is_flame_king_candidate(
+                info.name,
+                info.service_uuids,
+                device_name=DEVICE_NAME,
+                service_uuid=SERVICE_UUID,
+            )
+        }
+        self._discovered = candidates
+
+        if not candidates:
+            return self.async_show_form(
+                step_id="user", errors={"base": "no_devices_found"}
+            )
+
+        if len(candidates) == 1:
+            return await self._async_set_discovered_device(
+                next(iter(candidates.values()))
+            )
+
+        options = [
             {
-                vol.Required(CONF_ADDRESS): str,
-                vol.Optional(CONF_NAME, default=DEVICE_NAME): str,
+                "value": address,
+                "label": f"{info.name or DEVICE_NAME} ({address})",
             }
+            for address, info in sorted(candidates.items())
+        ]
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_DEVICE): SelectSelector(
+                        SelectSelectorConfig(options=options)
+                    )
+                }
+            ),
         )
-        return self.async_show_form(step_id="user", data_schema=schema)
 
     @staticmethod
     def async_get_options_flow(config_entry: Any) -> OptionsFlow:
