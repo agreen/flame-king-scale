@@ -8,20 +8,26 @@ import voluptuous as vol
 from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.const import CONF_NAME
+from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers.selector import (
+    AreaSelector,
     NumberSelector,
     NumberSelectorConfig,
     SelectSelector,
     SelectSelectorConfig,
+    TextSelector,
 )
 
 from .const import (
     CONF_ADDRESS,
+    CONF_AREA_ID,
     CONF_CAPACITY,
     CONF_DEVICE,
     CONF_RAW_REFERENCE,
     CONF_RAW_ZERO,
     CONF_REFERENCE_WEIGHT,
+    CONF_SUGGESTED_AREA,
     CONF_TARE_WEIGHT,
     DEFAULT_OPTIONS,
     DEVICE_NAME,
@@ -69,15 +75,51 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_bluetooth_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Confirm discovered device setup."""
+        """Configure the discovered device and its tank."""
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self.async_create_entry(
-                title=self._name,
-                data={CONF_ADDRESS: self._address},
-                options=DEFAULT_OPTIONS,
-            )
+            name = str(user_input[CONF_NAME]).strip()
+            if not name:
+                errors[CONF_NAME] = "invalid_name"
+            else:
+                data = {CONF_ADDRESS: self._address}
+                if area_id := user_input.get(CONF_AREA_ID):
+                    area = ar.async_get(self.hass).async_get_area(area_id)
+                    if area is None:
+                        errors[CONF_AREA_ID] = "invalid_area"
+                    else:
+                        data[CONF_SUGGESTED_AREA] = area.name
+                if not errors:
+                    options = {
+                        **DEFAULT_OPTIONS,
+                        CONF_TARE_WEIGHT: user_input[CONF_TARE_WEIGHT],
+                        CONF_CAPACITY: user_input[CONF_CAPACITY],
+                    }
+                    return self.async_create_entry(
+                        title=name,
+                        data=data,
+                        options=options,
+                    )
+        positive = NumberSelector(
+            NumberSelectorConfig(min=0.01, max=500, step=0.01)
+        )
         return self.async_show_form(
             step_id="bluetooth_confirm",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_NAME, default=self._name): TextSelector(),
+                    vol.Optional(CONF_AREA_ID): AreaSelector(),
+                    vol.Required(
+                        CONF_TARE_WEIGHT,
+                        default=DEFAULT_OPTIONS[CONF_TARE_WEIGHT],
+                    ): positive,
+                    vol.Required(
+                        CONF_CAPACITY,
+                        default=DEFAULT_OPTIONS[CONF_CAPACITY],
+                    ): positive,
+                }
+            ),
+            errors=errors,
             description_placeholders={"name": self._name},
         )
 

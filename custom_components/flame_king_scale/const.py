@@ -3,7 +3,7 @@
 from typing import Final
 
 DOMAIN: Final = "flame_king_scale"
-PLATFORMS: Final = ["sensor"]
+PLATFORMS: Final = ["sensor", "number"]
 
 DEVICE_NAME: Final = "Gas Monitor"
 MODEL: Final = "YSNPS1"
@@ -13,7 +13,9 @@ SERVICE_UUID: Final = "0000ffe0-0000-1000-8000-00805f9b34fb"
 CHARACTERISTIC_UUID: Final = "0000ffe4-0000-1000-8000-00805f9b34fb"
 
 CONF_ADDRESS: Final = "address"
+CONF_AREA_ID: Final = "area_id"
 CONF_DEVICE: Final = "device"
+CONF_SUGGESTED_AREA: Final = "suggested_area"
 CONF_RAW_ZERO: Final = "raw_zero"
 CONF_RAW_REFERENCE: Final = "raw_reference"
 CONF_REFERENCE_WEIGHT: Final = "reference_weight_lb"

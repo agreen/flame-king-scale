@@ -5,12 +5,20 @@
       "not_supported": "The discovered Bluetooth device does not match a supported Flame King scale."
     },
     "error": {
+      "invalid_area": "The selected room no longer exists. Choose another room.",
+      "invalid_name": "Enter a name for this scale.",
       "no_devices_found": "No supported Flame King scale was found. Turn on the scale, close any app connected to it, and scan again."
     },
     "step": {
       "bluetooth_confirm": {
-        "description": "Set up the discovered Flame King propane scale {name}?",
-        "title": "Flame King propane scale discovered"
+        "data": {
+          "area_id": "Room",
+          "capacity_lb": "Propane tank capacity (lb)",
+          "name": "Scale name",
+          "tare_weight_lb": "Cylinder stamped tare weight (lb)"
+        },
+        "description": "Set up the discovered Flame King propane scale {name}. Enter the cylinder's stamped TW and rated propane capacity; these can be changed later from the device page.",
+        "title": "Configure discovered propane scale"
       },
       "user": {
         "data": {
@@ -40,6 +48,13 @@
     }
   },
   "entity": {
+    "number": {
+      "capacity": {"name": "Propane capacity"},
+      "raw_reference": {"name": "Raw reference"},
+      "raw_zero": {"name": "Raw zero"},
+      "reference_weight": {"name": "Reference weight"},
+      "tare_weight": {"name": "Tare weight"}
+    },
     "sensor": {
       "battery": {"name": "Battery"},
       "gross_weight": {"name": "Gross weight"},

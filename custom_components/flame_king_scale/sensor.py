@@ -12,9 +12,8 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfMass
+from homeassistant.const import EntityCategory, PERCENTAGE, UnitOfMass
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .bluetooth import FlameKingBluetoothManager
@@ -25,10 +24,8 @@ from .const import (
     CONF_REFERENCE_WEIGHT,
     CONF_TARE_WEIGHT,
     DEFAULT_OPTIONS,
-    DOMAIN,
-    MANUFACTURER,
-    MODEL,
 )
+from .entity import scale_device_info
 from .protocol import TankState, calculate_tank_state
 
 
@@ -83,6 +80,7 @@ SENSOR_DESCRIPTIONS = (
     FlameKingSensorDescription(
         key="raw",
         translation_key="raw",
+        entity_category=EntityCategory.DIAGNOSTIC,
         native_unit_of_measurement=None,
         device_class=None,
         icon="mdi:scale",
@@ -124,12 +122,7 @@ class FlameKingSensor(SensorEntity):
         self._attr_native_unit_of_measurement = description.native_unit_of_measurement
         self._attr_device_class = description.device_class
         self._attr_icon = description.icon
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, entry.unique_id or self.manager.address)},
-            name=entry.title,
-            manufacturer=MANUFACTURER,
-            model=MODEL,
-        )
+        self._attr_device_info = scale_device_info(entry)
 
     @property
     def available(self) -> bool:

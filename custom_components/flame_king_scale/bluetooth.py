@@ -68,6 +68,11 @@ class FlameKingBluetoothManager:
             listener()
 
     @callback
+    def async_notify_listeners(self) -> None:
+        """Notify entities that local configuration changed."""
+        self._notify_listeners()
+
+    @callback
     def _notification_handler(self, _sender: object, data: bytearray) -> None:
         try:
             self.packet = decode_packet(data)

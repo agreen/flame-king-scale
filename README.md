@@ -16,6 +16,11 @@ six-byte weight packets.
 - Battery
 - Raw scale reading (for calibration and troubleshooting)
 
+The scale device also exposes configuration-number entities for tare weight,
+propane capacity, reference weight, raw zero, and raw reference. These appear in
+the **Configuration** section of the device page and can be changed or automated
+without reopening the integration setup flow.
+
 ## Requirements
 
 - Home Assistant 2025.1 or newer
@@ -47,10 +52,13 @@ Manual installation is also supported: copy
    the scale; it never asks you to type a Bluetooth address. Candidates must use
    the exact `Gas Monitor` name and, when advertised, the `FFE0` service UUID.
    On connection the integration verifies the `FFE0` service and `FFE4`
-   notification characteristic before accepting scale packets.
+   notification characteristic before accepting scale packets. The discovery
+   wizard lets you name the scale, assign its room, and enter the cylinder's
+   stamped tare weight and propane capacity before setup finishes.
 2. Keep the empty scale unloaded and note the **Raw scale reading**.
 3. Put a known weight on the scale and note the new raw reading.
-4. Open the integration's **Configure** dialog and enter:
+4. Open the scale's device page and use its **Configuration** entities (or open
+   the integration's **Configure** dialog) to enter:
    - raw zero reading;
    - raw reference reading;
    - known reference weight in pounds;
