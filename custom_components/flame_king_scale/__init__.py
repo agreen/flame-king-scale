@@ -6,14 +6,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .bluetooth import FlameKingBluetoothManager
-from .const import CONF_ADDRESS, PLATFORMS
+from .const import PLATFORMS
 
 type FlameKingConfigEntry = ConfigEntry[FlameKingBluetoothManager]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: FlameKingConfigEntry) -> bool:
     """Set up a Flame King scale from a config entry."""
-    manager = FlameKingBluetoothManager(hass, entry.data[CONF_ADDRESS])
+    manager = FlameKingBluetoothManager(hass, entry)
     entry.runtime_data = manager
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await manager.async_start()

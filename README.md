@@ -18,11 +18,25 @@ six-byte weight packets.
 - Propane remaining percentage
 - Battery
 - Raw scale reading (for calibration and troubleshooting)
+- Request reading button
 
 The scale device exposes configuration-number entities for tare weight and
 propane capacity. Guided calibration captures raw readings directly from the
 scale; its manual calibration entities are disabled by default and remain
 available for diagnostics.
+
+## Battery-friendly polling
+
+The integration does not hold the Bluetooth connection open continuously. By
+default it wakes the scale every 30 minutes, collects a short sample, and
+disconnects so the hardware can return to its low-power state. If the measured
+weight changed by more than 1% of propane capacity, it streams updates until the
+load has remained within that variance for 5 minutes, then disconnects again.
+
+The regular interval, stable time, and variance are configurable from the
+device page or **Configure → Polling and battery**. **Request reading** starts an
+immediate sample without changing the schedule. The most recent values remain
+available in Home Assistant while the scale sleeps.
 
 ## Requirements
 

@@ -126,8 +126,8 @@ class FlameKingSensor(SensorEntity):
 
     @property
     def available(self) -> bool:
-        """Return whether the scale has an active connection and valid packet."""
-        return self.manager.available and self.manager.packet is not None
+        """Keep the most recent reading available while the scale sleeps."""
+        return self.manager.packet is not None
 
     @property
     def tank_state(self) -> TankState | None:

@@ -24,9 +24,12 @@ from .const import (
     CONF_AREA_ID,
     CONF_CAPACITY,
     CONF_DEVICE,
+    CONF_POLL_INTERVAL,
     CONF_RAW_REFERENCE,
     CONF_RAW_ZERO,
     CONF_REFERENCE_WEIGHT,
+    CONF_STABILITY_TIME,
+    CONF_STABILITY_VARIANCE,
     CONF_SUGGESTED_AREA,
     CONF_TARE_WEIGHT,
     DEFAULT_OPTIONS,
@@ -211,7 +214,40 @@ class FlameKingOptionsFlow(OptionsFlow):
         """Show the scale configuration menu."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=["tank", "calibrate", "advanced"],
+            menu_options=["tank", "calibrate", "power", "advanced"],
+        )
+
+    async def async_step_power(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Configure adaptive polling and stability behavior."""
+        current = self._current_options()
+        if user_input is not None:
+            current.update(user_input)
+            return self.async_create_entry(title="", data=current)
+
+        return self.async_show_form(
+            step_id="power",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_POLL_INTERVAL, default=current[CONF_POLL_INTERVAL]
+                    ): NumberSelector(
+                        NumberSelectorConfig(min=5, max=1440, step=5)
+                    ),
+                    vol.Required(
+                        CONF_STABILITY_TIME, default=current[CONF_STABILITY_TIME]
+                    ): NumberSelector(
+                        NumberSelectorConfig(min=1, max=30, step=1)
+                    ),
+                    vol.Required(
+                        CONF_STABILITY_VARIANCE,
+                        default=current[CONF_STABILITY_VARIANCE],
+                    ): NumberSelector(
+                        NumberSelectorConfig(min=0.1, max=10, step=0.1)
+                    ),
+                }
+            ),
         )
 
     async def async_step_tank(
@@ -242,13 +278,15 @@ class FlameKingOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Capture the unloaded scale reading."""
+        manager = self.config_entry.runtime_data
+        manager.async_trigger_poll()
         errors: dict[str, str] = {}
         if user_input is not None:
-            raw = self._live_raw()
-            if raw is None:
+            packet = await manager.async_request_refresh()
+            if packet is None:
                 errors["base"] = "no_live_reading"
             else:
-                self._captured_raw_zero = raw
+                self._captured_raw_zero = packet.raw
                 return self.async_show_menu(
                     step_id="calibration_reference",
                     menu_options=["calibrate_empty_tank", "calibrate_known_weight"],
@@ -287,22 +325,24 @@ class FlameKingOptionsFlow(OptionsFlow):
             return await self.async_step_calibrate()
 
         current = self._current_options()
+        manager = self.config_entry.runtime_data
+        manager.async_trigger_poll()
         errors: dict[str, str] = {}
         reference_weight = float(current[CONF_TARE_WEIGHT])
         if request_weight and user_input is not None:
             reference_weight = float(user_input[CONF_REFERENCE_WEIGHT])
 
         if user_input is not None:
-            raw_reference = self._live_raw()
-            if raw_reference is None:
+            packet = await manager.async_request_refresh()
+            if packet is None:
                 errors["base"] = "no_live_reading"
-            elif raw_reference == self._captured_raw_zero:
+            elif packet.raw == self._captured_raw_zero:
                 errors["base"] = "same_calibration_points"
             else:
                 current.update(
                     {
                         CONF_RAW_ZERO: self._captured_raw_zero,
-                        CONF_RAW_REFERENCE: raw_reference,
+                        CONF_RAW_REFERENCE: packet.raw,
                         CONF_REFERENCE_WEIGHT: reference_weight,
                     }
                 )

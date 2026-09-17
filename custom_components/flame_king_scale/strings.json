@@ -43,11 +43,13 @@
         "menu_options": {
           "advanced": "Advanced manual calibration",
           "calibrate": "Guided scale calibration",
+          "power": "Polling and battery",
           "tank": "Tank settings"
         },
         "menu_option_descriptions": {
           "advanced": "View or enter the raw calibration values directly.",
           "calibrate": "Capture zero and a known weight directly from the connected scale.",
+          "power": "Control scheduled readings and change-monitoring behavior.",
           "tank": "Set the cylinder's stamped tare weight and propane capacity."
         },
         "title": "Configure propane scale"
@@ -59,6 +61,15 @@
         },
         "description": "Enter the cylinder's stamped TW, not an estimate. A typical 20 lb grill cylinder may use an 18 lb tare, but the cylinder stamp is authoritative.",
         "title": "Tank settings"
+      },
+      "power": {
+        "data": {
+          "poll_interval_minutes": "Regular reading interval (minutes)",
+          "stability_time_minutes": "Stable time before sleep (minutes)",
+          "stability_variance_percent": "Significant weight variance (% of capacity)"
+        },
+        "description": "The scale normally connects briefly at the regular interval. A significant weight change keeps it connected until readings remain within the variance for the configured stable time.",
+        "title": "Polling and battery"
       },
       "calibrate": {
         "description": "Turn on the scale, remove the cylinder and every other load, and wait for it to settle. Then submit to capture zero automatically. Current raw reading: {raw}.",
@@ -98,11 +109,17 @@
     }
   },
   "entity": {
+    "button": {
+      "refresh": {"name": "Request reading"}
+    },
     "number": {
       "capacity": {"name": "Propane capacity"},
+      "poll_interval": {"name": "Regular reading interval"},
       "raw_reference": {"name": "Raw reference"},
       "raw_zero": {"name": "Raw zero"},
       "reference_weight": {"name": "Reference weight"},
+      "stability_time": {"name": "Stable time before sleep"},
+      "stability_variance": {"name": "Significant weight variance"},
       "tare_weight": {"name": "Tare weight"}
     },
     "sensor": {

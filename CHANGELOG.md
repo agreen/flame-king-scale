@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## 0.5.0
+
+- Replace the permanent Bluetooth connection with battery-friendly adaptive
+  polling (30-minute regular interval by default).
+- Keep streaming after a significant weight change, then disconnect after the
+  reading stays within a configurable variance for 5 minutes.
+- Keep the last sensor readings available while the scale sleeps.
+- Add configurable polling, stability, and variance entities plus a Request
+  reading button.
+
 ## 0.4.0
 
 - Add guided two-point calibration that captures live raw readings from the

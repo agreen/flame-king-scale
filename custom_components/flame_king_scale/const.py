@@ -3,7 +3,7 @@
 from typing import Final
 
 DOMAIN: Final = "flame_king_scale"
-PLATFORMS: Final = ["sensor", "number"]
+PLATFORMS: Final = ["sensor", "number", "button"]
 
 DEVICE_NAME: Final = "Gas Monitor"
 MODEL: Final = "YSNPS1"
@@ -21,12 +21,18 @@ CONF_RAW_REFERENCE: Final = "raw_reference"
 CONF_REFERENCE_WEIGHT: Final = "reference_weight_lb"
 CONF_TARE_WEIGHT: Final = "tare_weight_lb"
 CONF_CAPACITY: Final = "capacity_lb"
+CONF_POLL_INTERVAL: Final = "poll_interval_minutes"
+CONF_STABILITY_TIME: Final = "stability_time_minutes"
+CONF_STABILITY_VARIANCE: Final = "stability_variance_percent"
 
 DEFAULT_RAW_ZERO: Final = 0
 DEFAULT_RAW_REFERENCE: Final = 1600
 DEFAULT_REFERENCE_WEIGHT: Final = 13.2277  # 6 kg, a published example point.
 DEFAULT_TARE_WEIGHT: Final = 18.0
 DEFAULT_CAPACITY: Final = 20.0
+DEFAULT_POLL_INTERVAL: Final = 30.0
+DEFAULT_STABILITY_TIME: Final = 5.0
+DEFAULT_STABILITY_VARIANCE: Final = 1.0
 
 DEFAULT_OPTIONS: Final = {
     CONF_RAW_ZERO: DEFAULT_RAW_ZERO,
@@ -34,4 +40,7 @@ DEFAULT_OPTIONS: Final = {
     CONF_REFERENCE_WEIGHT: DEFAULT_REFERENCE_WEIGHT,
     CONF_TARE_WEIGHT: DEFAULT_TARE_WEIGHT,
     CONF_CAPACITY: DEFAULT_CAPACITY,
+    CONF_POLL_INTERVAL: DEFAULT_POLL_INTERVAL,
+    CONF_STABILITY_TIME: DEFAULT_STABILITY_TIME,
+    CONF_STABILITY_VARIANCE: DEFAULT_STABILITY_VARIANCE,
 }

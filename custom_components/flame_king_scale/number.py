@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from homeassistant.components.number import NumberEntity, NumberEntityDescription
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EntityCategory, UnitOfMass
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfMass, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -14,9 +14,12 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .bluetooth import FlameKingBluetoothManager
 from .const import (
     CONF_CAPACITY,
+    CONF_POLL_INTERVAL,
     CONF_RAW_REFERENCE,
     CONF_RAW_ZERO,
     CONF_REFERENCE_WEIGHT,
+    CONF_STABILITY_TIME,
+    CONF_STABILITY_VARIANCE,
     CONF_TARE_WEIGHT,
     DEFAULT_OPTIONS,
 )
@@ -50,6 +53,36 @@ NUMBER_DESCRIPTIONS = (
         native_step=0.01,
         native_unit_of_measurement=UnitOfMass.POUNDS,
         icon="mdi:propane-tank",
+    ),
+    FlameKingNumberDescription(
+        key="poll_interval",
+        translation_key="poll_interval",
+        option_key=CONF_POLL_INTERVAL,
+        native_min_value=5,
+        native_max_value=1440,
+        native_step=5,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        icon="mdi:timer-sync-outline",
+    ),
+    FlameKingNumberDescription(
+        key="stability_time",
+        translation_key="stability_time",
+        option_key=CONF_STABILITY_TIME,
+        native_min_value=1,
+        native_max_value=30,
+        native_step=1,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        icon="mdi:timer-sand-complete",
+    ),
+    FlameKingNumberDescription(
+        key="stability_variance",
+        translation_key="stability_variance",
+        option_key=CONF_STABILITY_VARIANCE,
+        native_min_value=0.1,
+        native_max_value=10,
+        native_step=0.1,
+        native_unit_of_measurement=PERCENTAGE,
+        icon="mdi:approximately-equal",
     ),
     FlameKingNumberDescription(
         key="reference_weight",
