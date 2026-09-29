@@ -1,4 +1,15 @@
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+.uv-cache/
+.venv/
 *.py[cod]
+
+# Local reverse-engineering captures and downloaded analysis tools.
+# Bluetooth snoop logs can contain identifiers for unrelated nearby devices.
+captures/
+tools/
+
+# Local state created by the standalone Windows BLE monitor.
+monitor/.venv/
+monitor/logs/

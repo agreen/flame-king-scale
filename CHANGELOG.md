@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## 0.6.0
+
+- Change the battery-friendly regular reading interval to 60 minutes by default.
+- Detect sustained propane consumption while actively monitoring the scale.
+- Add gas-flow and extended-use binary sensors for Home Assistant automations.
+- Add measured consumption-rate, gas-use-duration, and time-remaining sensors.
+- Keep resetting the 5-minute quiet timer while gas continues to flow.
+- Add configurable flow-detection, minimum-rate, and long-use thresholds.
+- Correct the factory default zero point to raw 64 so default weights exactly
+  match the official Flame King app conversion across the scale's range.
+- Add a confirmed Reset factory calibration action that preserves tank and
+  device settings and allows guided calibration to be redone from scratch.
+
 ## 0.5.0
 
 - Replace the permanent Bluetooth connection with battery-friendly adaptive

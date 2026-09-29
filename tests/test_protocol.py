@@ -3,7 +3,10 @@
 import math
 import unittest
 
+from const import DEFAULT_RAW_REFERENCE, DEFAULT_RAW_ZERO, DEFAULT_REFERENCE_WEIGHT
 from protocol import InvalidPacketError, calculate_tank_state, decode_packet
+
+OFFICIAL_LB_PER_KG = 2.2046226218
 
 
 class ProtocolTests(unittest.TestCase):
@@ -43,6 +46,28 @@ class ProtocolTests(unittest.TestCase):
         self.assertTrue(math.isclose(state.gross_weight_lb, 30))
         self.assertTrue(math.isclose(state.propane_weight_lb, 13))
         self.assertTrue(math.isclose(state.propane_percent, 65))
+
+    def test_default_calibration_matches_official_app_weight_formula(self) -> None:
+        """The two-point model should reproduce Flame King's fixed conversion."""
+        for raw in (64, 320, 1600, 4096, 8192):
+            with self.subTest(raw=raw):
+                state = calculate_tank_state(
+                    raw,
+                    raw_zero=DEFAULT_RAW_ZERO,
+                    raw_reference=DEFAULT_RAW_REFERENCE,
+                    reference_weight_lb=DEFAULT_REFERENCE_WEIGHT,
+                    tare_weight_lb=17,
+                    capacity_lb=20,
+                )
+                official_gross_lb = (raw / 256 - 0.25) * OFFICIAL_LB_PER_KG
+                self.assertTrue(
+                    math.isclose(
+                        state.gross_weight_lb,
+                        official_gross_lb,
+                        rel_tol=1e-12,
+                        abs_tol=1e-12,
+                    )
+                )
 
     def test_calculation_clamps_propane_and_percentage(self) -> None:
         empty = calculate_tank_state(

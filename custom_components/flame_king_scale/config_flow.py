@@ -24,6 +24,9 @@ from .const import (
     CONF_AREA_ID,
     CONF_CAPACITY,
     CONF_DEVICE,
+    CONF_FLOW_DETECTION_TIME,
+    CONF_FLOW_MIN_RATE,
+    CONF_LONG_USE_TIME,
     CONF_POLL_INTERVAL,
     CONF_RAW_REFERENCE,
     CONF_RAW_ZERO,
@@ -214,7 +217,28 @@ class FlameKingOptionsFlow(OptionsFlow):
         """Show the scale configuration menu."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=["tank", "calibrate", "power", "advanced"],
+            menu_options=[
+                "tank",
+                "calibrate",
+                "reset_calibration",
+                "power",
+                "advanced",
+            ],
+        )
+
+    async def async_step_reset_calibration(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Reset only the load-cell conversion to Flame King factory values."""
+        if user_input is not None:
+            current = self._current_options()
+            for key in (CONF_RAW_ZERO, CONF_RAW_REFERENCE, CONF_REFERENCE_WEIGHT):
+                current[key] = DEFAULT_OPTIONS[key]
+            return self.async_create_entry(title="", data=current)
+
+        return self.async_show_form(
+            step_id="reset_calibration",
+            data_schema=vol.Schema({}),
         )
 
     async def async_step_power(
@@ -245,6 +269,22 @@ class FlameKingOptionsFlow(OptionsFlow):
                         default=current[CONF_STABILITY_VARIANCE],
                     ): NumberSelector(
                         NumberSelectorConfig(min=0.1, max=10, step=0.1)
+                    ),
+                    vol.Required(
+                        CONF_FLOW_DETECTION_TIME,
+                        default=current[CONF_FLOW_DETECTION_TIME],
+                    ): NumberSelector(
+                        NumberSelectorConfig(min=15, max=600, step=15)
+                    ),
+                    vol.Required(
+                        CONF_FLOW_MIN_RATE, default=current[CONF_FLOW_MIN_RATE]
+                    ): NumberSelector(
+                        NumberSelectorConfig(min=0.1, max=20, step=0.1)
+                    ),
+                    vol.Required(
+                        CONF_LONG_USE_TIME, default=current[CONF_LONG_USE_TIME]
+                    ): NumberSelector(
+                        NumberSelectorConfig(min=5, max=1440, step=5)
                     ),
                 }
             ),

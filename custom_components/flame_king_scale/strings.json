@@ -43,12 +43,14 @@
         "menu_options": {
           "advanced": "Advanced manual calibration",
           "calibrate": "Guided scale calibration",
+          "reset_calibration": "Reset factory calibration",
           "power": "Polling and battery",
           "tank": "Tank settings"
         },
         "menu_option_descriptions": {
           "advanced": "View or enter the raw calibration values directly.",
           "calibrate": "Capture zero and a known weight directly from the connected scale.",
+          "reset_calibration": "Erase the scale calibration and restore Flame King's factory conversion.",
           "power": "Control scheduled readings and change-monitoring behavior.",
           "tank": "Set the cylinder's stamped tare weight and propane capacity."
         },
@@ -66,14 +68,21 @@
         "data": {
           "poll_interval_minutes": "Regular reading interval (minutes)",
           "stability_time_minutes": "Stable time before sleep (minutes)",
-          "stability_variance_percent": "Significant weight variance (% of capacity)"
+          "stability_variance_percent": "Significant weight variance (% of capacity)",
+          "flow_detection_seconds": "Gas-flow detection time (seconds)",
+          "flow_minimum_rate_lb_per_hour": "Minimum gas-flow rate (lb/hour)",
+          "long_use_minutes": "Long-use warning time (minutes)"
         },
-        "description": "The scale normally connects briefly at the regular interval. A significant weight change keeps it connected until readings remain within the variance for the configured stable time.",
+        "description": "The scale normally connects briefly at the regular interval. A significant weight change keeps it connected until readings remain within the variance and no gas flow is detected for the configured stable time. The long-use setting controls the Extended gas use binary sensor.",
         "title": "Polling and battery"
       },
       "calibrate": {
         "description": "Turn on the scale, remove the cylinder and every other load, and wait for it to settle. Then submit to capture zero automatically. Current raw reading: {raw}.",
         "title": "Step 1: Capture empty scale"
+      },
+      "reset_calibration": {
+        "description": "Submit to erase the current load-cell calibration and restore the Flame King factory values (raw zero 64; raw reference 1600 at 6 kg). Tank tare, propane capacity, name, room, and polling settings are not changed. You can run Guided scale calibration afterward to measure this individual scale again.",
+        "title": "Reset factory calibration?"
       },
       "calibration_reference": {
         "menu_options": {
@@ -114,6 +123,9 @@
     },
     "number": {
       "capacity": {"name": "Propane capacity"},
+      "flow_detection_time": {"name": "Gas-flow detection time"},
+      "minimum_flow_rate": {"name": "Minimum gas-flow rate"},
+      "long_use_time": {"name": "Long-use warning time"},
       "poll_interval": {"name": "Regular reading interval"},
       "raw_reference": {"name": "Raw reference"},
       "raw_zero": {"name": "Raw zero"},
@@ -124,10 +136,17 @@
     },
     "sensor": {
       "battery": {"name": "Battery"},
+      "consumption_rate": {"name": "Propane consumption rate"},
+      "estimated_time_remaining": {"name": "Estimated time remaining"},
+      "gas_use_duration": {"name": "Gas-use duration"},
       "gross_weight": {"name": "Gross weight"},
       "propane_percent": {"name": "Propane remaining"},
       "propane_weight": {"name": "Propane weight"},
       "raw": {"name": "Raw scale reading"}
+    },
+    "binary_sensor": {
+      "gas_flowing": {"name": "Gas flowing"},
+      "extended_gas_use": {"name": "Extended gas use"}
     }
   }
 }

@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfMass
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfMass, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -66,6 +66,30 @@ SENSOR_DESCRIPTIONS = (
         value_fn=lambda entity: entity.tank_state.propane_percent
         if entity.tank_state
         else None,
+    ),
+    FlameKingSensorDescription(
+        key="consumption_rate",
+        translation_key="consumption_rate",
+        native_unit_of_measurement="lb/h",
+        device_class=None,
+        icon="mdi:fire",
+        value_fn=lambda entity: entity.manager.usage.rate_lb_per_hour,
+    ),
+    FlameKingSensorDescription(
+        key="estimated_time_remaining",
+        translation_key="estimated_time_remaining",
+        native_unit_of_measurement=UnitOfTime.HOURS,
+        device_class=SensorDeviceClass.DURATION,
+        icon="mdi:timer-outline",
+        value_fn=lambda entity: entity.manager.usage.estimated_hours_remaining,
+    ),
+    FlameKingSensorDescription(
+        key="gas_use_duration",
+        translation_key="gas_use_duration",
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        icon="mdi:timer-sand",
+        value_fn=lambda entity: entity.manager.usage.duration_minutes,
     ),
     FlameKingSensorDescription(
         key="battery",

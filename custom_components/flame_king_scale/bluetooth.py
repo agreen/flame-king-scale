@@ -18,23 +18,33 @@ from .const import (
     CHARACTERISTIC_UUID,
     CONF_ADDRESS,
     CONF_CAPACITY,
+    CONF_FLOW_DETECTION_TIME,
+    CONF_FLOW_MIN_RATE,
+    CONF_LONG_USE_TIME,
     CONF_POLL_INTERVAL,
     CONF_RAW_REFERENCE,
     CONF_RAW_ZERO,
     CONF_REFERENCE_WEIGHT,
     CONF_STABILITY_TIME,
     CONF_STABILITY_VARIANCE,
+    CONF_TARE_WEIGHT,
     DEFAULT_OPTIONS,
     DEVICE_NAME,
     SERVICE_UUID,
 )
 from .polling import has_significant_change, raw_tolerance_for_percent
-from .protocol import InvalidPacketError, ScalePacket, decode_packet
+from .protocol import (
+    InvalidPacketError,
+    ScalePacket,
+    calculate_tank_state,
+    decode_packet,
+)
+from .usage import PropaneUsageTracker, UsageState
 
 _LOGGER = logging.getLogger(__name__)
 _FIRST_PACKET_TIMEOUT = 15.0
 _QUIET_SAMPLE_SECONDS = 10.0
-_MAX_ACTIVE_SESSION_SECONDS = 30 * 60.0
+_MAX_ACTIVE_SESSION_SECONDS = 24 * 60 * 60.0
 
 
 class FlameKingBluetoothManager:
@@ -57,6 +67,19 @@ class FlameKingBluetoothManager:
         self._session_active = False
         self._task: asyncio.Task[None] | None = None
         self._client: BleakClientWithServiceCache | None = None
+        self._usage = PropaneUsageTracker()
+
+    @property
+    def usage(self) -> UsageState:
+        """Return the current propane-use estimate."""
+        return self._usage.state
+
+    @property
+    def long_use(self) -> bool:
+        """Return whether the current use episode crossed the configured limit."""
+        return self.usage.flowing and self.usage.duration_minutes >= float(
+            self._options()[CONF_LONG_USE_TIME]
+        )
 
     async def async_start(self) -> None:
         """Start the background connection loop."""
@@ -120,9 +143,31 @@ class FlameKingBluetoothManager:
             _LOGGER.debug("Ignoring invalid Flame King packet: %s", err)
             return
         self._packet_generation += 1
+        self._update_usage()
         self._packet_received.set()
         self.available = True
         self._notify_listeners()
+
+    @callback
+    def _update_usage(self) -> None:
+        """Feed a decoded reading to the gas-use estimator."""
+        if self.packet is None:
+            return
+        options = self._options()
+        tank = calculate_tank_state(
+            self.packet.raw,
+            raw_zero=int(options[CONF_RAW_ZERO]),
+            raw_reference=int(options[CONF_RAW_REFERENCE]),
+            reference_weight_lb=float(options[CONF_REFERENCE_WEIGHT]),
+            tare_weight_lb=float(options[CONF_TARE_WEIGHT]),
+            capacity_lb=float(options[CONF_CAPACITY]),
+        )
+        self._usage.add_sample(
+            asyncio.get_running_loop().time(),
+            tank.propane_weight_lb,
+            detection_seconds=float(options[CONF_FLOW_DETECTION_TIME]),
+            minimum_rate_lb_per_hour=float(options[CONF_FLOW_MIN_RATE]),
+        )
 
     @callback
     def _disconnected_callback(self, _client: object) -> None:
@@ -214,6 +259,10 @@ class FlameKingBluetoothManager:
             self._client = None
             self._session_active = False
             self._disconnected.clear()
+            usage_was_active = self.usage.flowing
+            self._usage.stop()
+            if usage_was_active:
+                self._notify_listeners()
 
     async def _async_quiet_sample(self, anchor_raw: int, tolerance: int) -> bool:
         """Briefly sample an unchanged scale before returning it to sleep."""
@@ -255,6 +304,10 @@ class FlameKingBluetoothManager:
             generation = self._packet_generation
             if has_significant_change(anchor_raw, packet.raw, tolerance):
                 anchor_raw = packet.raw
+                stable_since = loop.time()
+            elif self.usage.flowing:
+                # A real, sustained burn can be much smaller than the tank-change
+                # tolerance. Keep listening until the burn stops and clear air elapses.
                 stable_since = loop.time()
 
     async def _async_wait_for_new_packet(

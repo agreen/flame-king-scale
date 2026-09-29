@@ -16,6 +16,10 @@ six-byte weight packets.
 - Gross weight
 - Propane remaining
 - Propane remaining percentage
+- Gas flowing and extended gas use
+- Propane consumption rate
+- Estimated time remaining while gas is flowing
+- Gas-use duration
 - Battery
 - Raw scale reading (for calibration and troubleshooting)
 - Request reading button
@@ -28,15 +32,29 @@ available for diagnostics.
 ## Battery-friendly polling
 
 The integration does not hold the Bluetooth connection open continuously. By
-default it wakes the scale every 30 minutes, collects a short sample, and
+default it wakes the scale every 60 minutes, collects a short sample, and
 disconnects so the hardware can return to its low-power state. If the measured
 weight changed by more than 1% of propane capacity, it streams updates until the
 load has remained within that variance for 5 minutes, then disconnects again.
+While a sustained downward trend indicates gas flow, the quiet timer keeps
+resetting. The connection closes only after both the weight and detected flow
+have been quiet for 5 minutes.
 
 The regular interval, stable time, and variance are configurable from the
 device page or **Configure → Polling and battery**. **Request reading** starts an
 immediate sample without changing the schedule. The most recent values remain
 available in Home Assistant while the scale sleeps.
+
+The **Gas flowing** binary sensor is designed as an automation trigger. The
+**Extended gas use** binary sensor turns on after the configurable long-use
+time (2 hours by default), so notifications remain under the user's normal Home
+Assistant notification and automation controls.
+
+Time remaining is calculated from the measured propane weight divided by the
+observed consumption rate. It is available only during a sustained burn, when
+there is enough live data for an honest estimate. For comparison, the official
+Flame King app assumes every appliance burns 36,000 BTU/hour; this integration
+does not use that fixed assumption.
 
 ## Requirements
 
@@ -91,6 +109,12 @@ The guided flow reads both raw values from the connected scale. **Advanced
 manual calibration** is available for diagnostics, but normal setup never
 requires copying raw sensor readings.
 
+**Reset factory calibration** erases only the three load-cell conversion values
+and restores the conversion used by the official Flame King app. It preserves
+the cylinder tare, propane capacity, device identity, room, and polling
+settings. Guided calibration can be run immediately afterward for a clean
+recalibration of the individual scale.
+
 The propane calculation is:
 
 ```text
@@ -116,6 +140,15 @@ AA 01 LL HH BB CC
 
 The scale exposes service `0000FFE0-0000-1000-8000-00805F9B34FB` and notifies
 on characteristic `0000FFE4-0000-1000-8000-00805F9B34FB`.
+
+The official app's factory conversion is equivalent to:
+
+```text
+gross_kg = (raw - 64) / 256
+```
+
+Those values are this integration's defaults. Guided two-point calibration
+replaces them with measurements from the individual scale.
 
 ## Troubleshooting
 
