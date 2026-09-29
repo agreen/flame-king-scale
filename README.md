@@ -95,7 +95,8 @@ The repository also includes an optional Home Assistant package that uses any
 configured Flame King scale as a package-presence sensor without changing this
 integration's code or calibration. It supports both `!include_dir_named` and
 `!include_dir_merge_named`, captures the empty box as a separate baseline, and
-can request one settled reading 10 seconds after a `package_box_closed` event.
+can request one settled reading 10 seconds after the package-box contact sensor
+changes from open to closed.
 The integration's normal hourly reading remains a fallback for packages placed
 on top of the box without opening it.
 

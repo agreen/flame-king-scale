@@ -80,19 +80,21 @@ The package creates:
 - **Package box: Check 10 seconds after close**: waits 10 seconds and presses
   the integration's one-shot **Request reading** button.
 
-## Box-open and box-closed events
+## Package-box contact sensor
 
-The included automation listens for both common Home Assistant forms:
+The Aqara package-box sensor exposes this Home Assistant entity:
 
 ```text
-package_box_closed
-event.package_box_closed
+binary_sensor.package_box_contact
 ```
 
-The first is an event-bus event type; the second is an event entity. Ten
-seconds after either one occurs, the package requests one scale reading. The
-delay gives the lid, box, and scale time to settle. A live five-minute
-monitoring session is intentionally not started. The same check detects both a
+It is a door-class contact sensor, not an event entity. `on` means open and
+`off` means closed. The included automation listens specifically for the
+`on → off` transition. Ten seconds after closing, it verifies that the box is
+still closed and requests one scale reading. The delay gives the lid, box, and
+scale time to settle. If the box was reopened during the delay, the reading is
+skipped and the next close schedules a new one. A live five-minute monitoring
+session is intentionally not started. The same settled check detects both a
 newly delivered package and a package that was removed.
 
 This close-triggered reading is only a fast path. The package-presence sensor
@@ -103,16 +105,21 @@ can arrive up to approximately one polling interval later. Reducing that delay
 means shortening the integration's regular polling interval, with the expected
 battery-life tradeoff.
 
-If your box-close event uses a different ID, change either the `event_type:` or
-`entity_id:` line in the YAML, as applicable. If your existing box automation
-does not expose either form, have its close action run:
+If another installation uses a differently named contact entity, change both
+references to `binary_sensor.package_box_contact` in the YAML. Alternatively,
+have an existing close automation run:
 
 ```yaml
 - action: script.package_box_check_10_seconds_after_close
 ```
 
-No action is required for the box-open event. The reading after the next close
-captures the useful settled state.
+No scale action is required when the box opens. The reading after the next
+close captures the useful settled state.
+
+The contact device also exposes battery, voltage, internal device temperature,
+and last-seen diagnostics. Those can be useful for maintenance alerts but are
+not delivery triggers. The disabled trigger-count and link-quality diagnostics
+are likewise unnecessary for this package.
 
 ## Notification hooks
 

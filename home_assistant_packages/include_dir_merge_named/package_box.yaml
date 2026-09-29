@@ -128,6 +128,9 @@ package_box:
       mode: restart
       sequence:
         - delay: "00:00:10"
+        - condition: state
+          entity_id: binary_sensor.package_box_contact
+          state: "off"
         - variables:
             request_button: "{{ states('input_text.package_box_scale_request_button') }}"
         - condition: template
@@ -144,18 +147,10 @@ package_box:
       description: Request one settled scale reading 10 seconds after the box closes.
       mode: restart
       triggers:
-        - id: event_bus
-          trigger: event
-          event_type: package_box_closed
-        - id: event_entity
-          trigger: state
-          entity_id: event.package_box_closed
-      conditions:
-        - condition: template
-          value_template: >-
-            {{ trigger.id == 'event_bus' or
-               (trigger.from_state is not none and
-                trigger.from_state.state not in ['unknown', 'unavailable']) }}
+        - trigger: state
+          entity_id: binary_sensor.package_box_contact
+          from: "on"
+          to: "off"
       actions:
         - action: script.package_box_check_10_seconds_after_close
 
