@@ -8,7 +8,13 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .bluetooth import FlameKingBluetoothManager
-from .const import CONF_CAPACITY, DEFAULT_OPTIONS, TANK_CAPACITY_OPTIONS
+from .const import (
+    CONF_CAPACITY,
+    CONF_TARE_WEIGHT,
+    DEFAULT_OPTIONS,
+    TANK_CAPACITY_OPTIONS,
+    default_tare_for_capacity,
+)
 from .entity import scale_device_info
 
 
@@ -64,6 +70,10 @@ class FlameKingTankSizeSelect(SelectEntity):
         """Persist the selected propane capacity."""
         capacity = float(option.removesuffix(" lb"))
         options = {**DEFAULT_OPTIONS, **self.entry.options}
+        old_capacity = float(options[CONF_CAPACITY])
+        old_tare = float(options[CONF_TARE_WEIGHT])
+        if abs(old_tare - default_tare_for_capacity(old_capacity)) <= 0.001:
+            options[CONF_TARE_WEIGHT] = default_tare_for_capacity(capacity)
         options[CONF_CAPACITY] = capacity
         self.hass.config_entries.async_update_entry(self.entry, options=options)
 

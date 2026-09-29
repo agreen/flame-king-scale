@@ -40,6 +40,7 @@ from .const import (
     DOMAIN,
     SERVICE_UUID,
     TANK_CAPACITY_OPTIONS,
+    default_tare_for_capacity,
 )
 from .discovery import is_flame_king_candidate
 
@@ -54,6 +55,8 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
         self._address: str | None = None
         self._name = DEVICE_NAME
         self._discovered: dict[str, BluetoothServiceInfoBleak] = {}
+        self._pending_data: dict[str, Any] | None = None
+        self._pending_capacity: float | None = None
 
     async def _async_set_discovered_device(
         self, discovery_info: BluetoothServiceInfoBleak
@@ -97,19 +100,10 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
                     else:
                         data[CONF_SUGGESTED_AREA] = area.name
                 if not errors:
-                    options = {
-                        **DEFAULT_OPTIONS,
-                        CONF_TARE_WEIGHT: user_input[CONF_TARE_WEIGHT],
-                        CONF_CAPACITY: float(user_input[CONF_CAPACITY]),
-                    }
-                    return self.async_create_entry(
-                        title=name,
-                        data=data,
-                        options=options,
-                    )
-        tare_weight = NumberSelector(
-            NumberSelectorConfig(min=0.01, max=500, step=0.01)
-        )
+                    self._name = name
+                    self._pending_data = data
+                    self._pending_capacity = float(user_input[CONF_CAPACITY])
+                    return await self.async_step_tare_override()
         tank_size = SelectSelector(
             SelectSelectorConfig(
                 options=[
@@ -126,10 +120,6 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_NAME, default=self._name): TextSelector(),
                     vol.Optional(CONF_AREA_ID): AreaSelector(),
                     vol.Required(
-                        CONF_TARE_WEIGHT,
-                        default=DEFAULT_OPTIONS[CONF_TARE_WEIGHT],
-                    ): tare_weight,
-                    vol.Required(
                         CONF_CAPACITY,
                         default=f"{DEFAULT_OPTIONS[CONF_CAPACITY]:g}",
                     ): tank_size,
@@ -137,6 +127,41 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
             ),
             errors=errors,
             description_placeholders={"name": self._name},
+        )
+
+    async def async_step_tare_override(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Offer an optional stamped tare override after tank-size selection."""
+        if self._pending_data is None or self._pending_capacity is None:
+            return await self.async_step_user()
+
+        preset = default_tare_for_capacity(self._pending_capacity)
+        if user_input is not None:
+            options = {
+                **DEFAULT_OPTIONS,
+                CONF_TARE_WEIGHT: float(user_input.get(CONF_TARE_WEIGHT, preset)),
+                CONF_CAPACITY: self._pending_capacity,
+            }
+            return self.async_create_entry(
+                title=self._name,
+                data=self._pending_data,
+                options=options,
+            )
+
+        return self.async_show_form(
+            step_id="tare_override",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_TARE_WEIGHT): NumberSelector(
+                        NumberSelectorConfig(min=0.01, max=500, step=0.01)
+                    )
+                }
+            ),
+            description_placeholders={
+                "size": f"{self._pending_capacity:g}",
+                "tare": f"{preset:g}",
+            },
         )
 
     async def async_step_user(
@@ -209,6 +234,8 @@ class FlameKingOptionsFlow(OptionsFlow):
     def __init__(self) -> None:
         """Initialize the guided calibration state."""
         self._captured_raw_zero: int | None = None
+        self._pending_tank_options: dict[str, Any] | None = None
+        self._pending_tare_override: float | None = None
 
     def _current_options(self) -> dict[str, Any]:
         """Return a complete mutable copy of the current options."""
@@ -304,13 +331,19 @@ class FlameKingOptionsFlow(OptionsFlow):
     async def async_step_tank(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Configure cylinder tare weight and propane capacity."""
+        """Choose the cylinder's rated propane capacity."""
         current = self._current_options()
         if user_input is not None:
-            current.update(user_input)
-            return self.async_create_entry(title="", data=current)
+            old_capacity = float(current[CONF_CAPACITY])
+            old_preset = default_tare_for_capacity(old_capacity)
+            current_tare = float(current[CONF_TARE_WEIGHT])
+            self._pending_tare_override = (
+                current_tare if abs(current_tare - old_preset) > 0.001 else None
+            )
+            current[CONF_CAPACITY] = float(user_input[CONF_CAPACITY])
+            self._pending_tank_options = current
+            return await self.async_step_tank_tare_override()
 
-        positive = NumberSelector(NumberSelectorConfig(min=0.01, max=500, step=0.01))
         tank_size = SelectSelector(
             SelectSelectorConfig(
                 options=[
@@ -325,13 +358,45 @@ class FlameKingOptionsFlow(OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_TARE_WEIGHT, default=current[CONF_TARE_WEIGHT]
-                    ): positive,
-                    vol.Required(
                         CONF_CAPACITY, default=f"{float(current[CONF_CAPACITY]):g}"
                     ): tank_size,
                 }
             ),
+        )
+
+    async def async_step_tank_tare_override(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Offer an optional stamped tare override for the selected tank size."""
+        if self._pending_tank_options is None:
+            return await self.async_step_tank()
+
+        capacity = float(self._pending_tank_options[CONF_CAPACITY])
+        preset = default_tare_for_capacity(capacity)
+        if user_input is not None:
+            self._pending_tank_options[CONF_TARE_WEIGHT] = float(
+                user_input.get(CONF_TARE_WEIGHT, preset)
+            )
+            return self.async_create_entry(title="", data=self._pending_tank_options)
+
+        field = vol.Optional(CONF_TARE_WEIGHT)
+        if self._pending_tare_override is not None:
+            field = vol.Optional(
+                CONF_TARE_WEIGHT, default=self._pending_tare_override
+            )
+        return self.async_show_form(
+            step_id="tank_tare_override",
+            data_schema=vol.Schema(
+                {
+                    field: NumberSelector(
+                        NumberSelectorConfig(min=0.01, max=500, step=0.01)
+                    )
+                }
+            ),
+            description_placeholders={
+                "size": f"{capacity:g}",
+                "tare": f"{preset:g}",
+            },
         )
 
     async def async_step_calibrate(

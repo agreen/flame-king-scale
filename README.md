@@ -24,8 +24,9 @@ six-byte weight packets.
 - Raw scale reading (for calibration and troubleshooting)
 - Request reading button
 
-The scale device exposes a tank-size dropdown for propane capacity and a
-separate configuration value for the cylinder's stamped tare weight. Guided
+The scale device exposes a tank-size dropdown for propane capacity. Selecting
+20 lb, 30 lb, or 40 lb supplies the matching typical empty-cylinder weight;
+the cylinder's stamped `TW` is an optional override when it differs. Guided
 calibration captures raw readings directly from the scale; its manual
 calibration entities are disabled by default and remain available for
 diagnostics.
@@ -95,11 +96,13 @@ Manual installation is also supported: copy
    the exact `Gas Monitor` name and, when advertised, the `FFE0` service UUID.
    On connection the integration verifies the `FFE0` service and `FFE4`
    notification characteristic before accepting scale packets. The discovery
-   wizard lets you name the scale, assign its room, and enter the cylinder's
-   stamped tare weight and propane capacity before setup finishes.
+   wizard lets you name the scale, assign its room, and choose the tank size.
+   It then offers the cylinder's stamped tare weight as an optional override;
+   leave it blank to use the preset empty weight for that tank size.
 2. Open the integration's **Configure** dialog and choose **Tank settings**.
    Choose its propane capacity from the tank-size dropdown (normally 20 lb for
-   a grill cylinder) and enter the cylinder's stamped tare weight (`TW`).
+   a grill cylinder). Leave the following override blank to use the preset, or
+   enter the cylinder's stamped tare weight (`TW`) when it differs.
 3. Choose **Guided scale calibration**. With the scale unloaded, capture zero.
 4. Add a reference load and capture it when the reading settles. You can use:
    - a confirmed-empty cylinder, disconnected from hoses and accessories; its

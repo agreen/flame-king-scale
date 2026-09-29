@@ -13,12 +13,18 @@
       "bluetooth_confirm": {
         "data": {
           "area_id": "Room",
-          "capacity_lb": "Tank size (propane capacity)",
-          "name": "Scale name",
-          "tare_weight_lb": "Cylinder stamped tare weight (lb)"
+          "capacity_lb": "Tank size",
+          "name": "Scale name"
         },
-        "description": "Set up the discovered Flame King propane scale {name}. Enter the cylinder's stamped TW and rated propane capacity; these can be changed later from the device page.",
+        "description": "Set up the discovered Flame King propane scale {name}. Choose the cylinder size; you can optionally override its typical empty weight on the next screen.",
         "title": "Configure discovered propane scale"
+      },
+      "tare_override": {
+        "data": {
+          "tare_weight_lb": "Stamped tare override (lb)"
+        },
+        "description": "A {size} lb cylinder will use the typical {tare} lb empty weight. Leave this blank to accept it, or enter the TW stamped on your cylinder if it differs.",
+        "title": "Optional empty-weight override"
       },
       "user": {
         "data": {
@@ -48,17 +54,23 @@
           "calibrate": "Capture zero and a known weight directly from the connected scale.",
           "reset_calibration": "Erase the scale calibration and restore Flame King's factory conversion.",
           "power": "Control scheduled readings and change-monitoring behavior.",
-          "tank": "Set the cylinder's stamped tare weight and propane capacity."
+          "tank": "Choose the tank size and optionally override its typical empty weight."
         },
         "title": "Configure propane scale"
       },
       "tank": {
         "data": {
-          "capacity_lb": "Tank size (propane capacity)",
-          "tare_weight_lb": "Cylinder stamped tare weight (lb)"
+          "capacity_lb": "Tank size"
         },
-        "description": "Enter the cylinder's stamped TW, not an estimate. A typical 20 lb grill cylinder may use an 18 lb tare, but the cylinder stamp is authoritative.",
+        "description": "Choose the cylinder's rated propane capacity. Its typical empty weight will be selected automatically on the next screen.",
         "title": "Tank settings"
+      },
+      "tank_tare_override": {
+        "data": {
+          "tare_weight_lb": "Stamped tare override (lb)"
+        },
+        "description": "The {size} lb preset uses a {tare} lb empty weight. Leave this blank to use the preset, or enter the TW stamped on your cylinder if it differs.",
+        "title": "Optional empty-weight override"
       },
       "power": {
         "data": {
@@ -130,7 +142,7 @@
       "reference_weight": {"name": "Reference weight"},
       "stability_time": {"name": "Stable time before sleep"},
       "stability_variance": {"name": "Significant weight variance"},
-      "tare_weight": {"name": "Tare weight"}
+      "tare_weight": {"name": "Stamped tare override"}
     },
     "sensor": {
       "battery": {"name": "Battery"},

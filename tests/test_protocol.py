@@ -3,7 +3,12 @@
 import math
 import unittest
 
-from const import DEFAULT_RAW_REFERENCE, DEFAULT_RAW_ZERO, DEFAULT_REFERENCE_WEIGHT
+from const import (
+    DEFAULT_RAW_REFERENCE,
+    DEFAULT_RAW_ZERO,
+    DEFAULT_REFERENCE_WEIGHT,
+    default_tare_for_capacity,
+)
 from protocol import InvalidPacketError, calculate_tank_state, decode_packet
 
 OFFICIAL_LB_PER_KG = 2.2046226218
@@ -16,6 +21,11 @@ class ProtocolTests(unittest.TestCase):
         packet = decode_packet(bytes.fromhex("AA 01 00 00 64 CF"))
         self.assertEqual(packet.raw, 0)
         self.assertEqual(packet.battery, 100)
+
+    def test_tank_size_empty_weight_presets(self) -> None:
+        self.assertEqual(default_tare_for_capacity(20), 17)
+        self.assertEqual(default_tare_for_capacity(30), 25)
+        self.assertEqual(default_tare_for_capacity(40), 32)
 
     def test_decode_little_endian_weight_and_checksum(self) -> None:
         # AA XOR 01 XOR 3A XOR 08 XOR 64 = FD

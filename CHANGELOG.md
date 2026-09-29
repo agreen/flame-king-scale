@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## 0.6.2
+
+- Make tank size the primary setup choice and automatically apply its typical
+  empty-cylinder weight (17 lb, 25 lb, or 32 lb).
+- Present stamped tare as an optional override instead of a second required
+  tank setting, while preserving existing custom tare values.
+- Update the typical empty weight with device-page tank-size changes while
+  leaving an existing stamped override untouched.
+- Rename the device-page tare entity to Stamped tare override.
+
 ## 0.6.1
 
 - Replace the propane-capacity slider with a Tank size dropdown for the Flame

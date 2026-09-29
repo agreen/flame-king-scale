@@ -32,7 +32,7 @@ CONF_LONG_USE_TIME: Final = "long_use_minutes"
 DEFAULT_RAW_ZERO: Final = 64
 DEFAULT_RAW_REFERENCE: Final = 1600
 DEFAULT_REFERENCE_WEIGHT: Final = 13.2277357308  # 6 kg in the official app.
-DEFAULT_TARE_WEIGHT: Final = 18.0
+DEFAULT_TARE_WEIGHT: Final = 17.0
 DEFAULT_CAPACITY: Final = 20.0
 DEFAULT_POLL_INTERVAL: Final = 60.0
 DEFAULT_STABILITY_TIME: Final = 5.0
@@ -41,6 +41,16 @@ DEFAULT_FLOW_DETECTION_TIME: Final = 60.0
 DEFAULT_FLOW_MIN_RATE: Final = 0.5
 DEFAULT_LONG_USE_TIME: Final = 120.0
 TANK_CAPACITY_OPTIONS: Final = (20.0, 30.0, 40.0)
+TANK_TARE_DEFAULTS: Final = {
+    20.0: 17.0,
+    30.0: 25.0,
+    40.0: 32.0,
+}
+
+
+def default_tare_for_capacity(capacity: float) -> float:
+    """Return the app-style empty-cylinder preset for a tank capacity."""
+    return TANK_TARE_DEFAULTS.get(capacity, DEFAULT_TARE_WEIGHT)
 
 DEFAULT_OPTIONS: Final = {
     CONF_RAW_ZERO: DEFAULT_RAW_ZERO,
