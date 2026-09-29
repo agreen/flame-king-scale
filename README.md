@@ -89,6 +89,19 @@ Manual installation is also supported: copy
 `custom_components/flame_king_scale` into Home Assistant's
 `/config/custom_components/` directory and restart.
 
+## Optional package-box overlay
+
+The repository also includes an optional Home Assistant package that uses any
+configured Flame King scale as a package-presence sensor without changing this
+integration's code or calibration. It supports both `!include_dir_named` and
+`!include_dir_merge_named`, captures the empty box as a separate baseline, and
+can request one settled reading 10 seconds after a `package_box_closed` event.
+The integration's normal hourly reading remains a fallback for packages placed
+on top of the box without opening it.
+
+See [`home_assistant_packages/README.md`](home_assistant_packages/README.md) for
+the package files and installation instructions.
+
 ## Set up
 
 1. Go to **Settings → Devices & services** and accept the discovered Flame King
