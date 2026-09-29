@@ -89,7 +89,7 @@ Manual installation is also supported: copy
 `custom_components/flame_king_scale` into Home Assistant's
 `/config/custom_components/` directory and restart.
 
-## Set up and calibrate
+## Set up
 
 1. Go to **Settings → Devices & services** and accept the discovered Flame King
    scale. If discovery does not appear, choose **Add integration** and search for
@@ -105,32 +105,67 @@ Manual installation is also supported: copy
    Choose its propane capacity from the tank-size dropdown (normally 20 lb for
    a grill cylinder). Leave the following override blank to use the preset, or
    enter the cylinder's stamped tare weight (`TW`) when it differs.
-3. Choose **Guided scale calibration**. With the scale unloaded, capture zero.
-4. Add a reference load and capture it when the reading settles. You can use:
-   - a confirmed-empty cylinder, disconnected from hoses and accessories; its
-     configured stamped tare weight is used automatically; or
-   - another accurately known weight entered in pounds.
 
-The guided flow reads both raw values from the connected scale. **Advanced
-manual calibration** is available for diagnostics, but normal setup never
-requires copying raw sensor readings.
+## Calibration choices
 
-**Reset factory calibration** erases only the three load-cell conversion values
-and restores the conversion used by the official Flame King app. It preserves
-the cylinder tare, propane capacity, device identity, room, and polling
-settings. Guided calibration can be run immediately afterward for a clean
-recalibration of the individual scale.
+### Factory calibration
+
+Start with the factory calibration. It matches the conversion in the official
+Flame King app and is normally adequate for tracking tank level and deciding
+when to refill. The firmware can report a literal raw zero with nothing on the
+platform even though the loaded conversion extrapolates to zero at raw 64; the
+integration treats that as an unloaded state and clips displayed gross weight
+at zero instead of showing `-0.55 lb`.
+
+Choose **Configure → Reset factory calibration** at any time to restore those
+defaults. Resetting preserves tank size, stamped-tare override, device name,
+room, and polling settings.
+
+### Guided household calibration
+
+Use **Configure → Guided scale calibration** if you want to tune the conversion
+to the individual scale. Laboratory weights are unnecessary: the goal is a
+useful household estimate, not a certified measurement.
+
+1. Remove everything and capture the unloaded state. This identifies the
+   firmware's no-load value but is not used as a loaded calibration point.
+2. Capture a first known load. A confirmed-empty cylinder, disconnected from
+   hoses and accessories, can use its stamped `TW` automatically.
+3. Capture a different second load and enter the actual total weight on the
+   scale. A reference near the normal 20–40 lb working range gives a useful
+   span. The integration derives both scale factor and offset from these two
+   loaded measurements, so it no longer assumes Flame King's raw-64 offset.
+
+Practical second references include two gallon water jugs, a weighed bucket of
+water, a bag of pet food or rice, or exercise weights. A digital bathroom scale
+is adequate: take several readings and use their average, preferably weighing
+yourself with and without an awkward object and subtracting the averages. Enter
+the result honestly to about `0.1 lb`; extra decimal places do not make a
+household reference more accurate. Do not assume an overflowing nominal
+five-gallon bucket contains exactly five gallons unless its total weight was
+measured separately.
+
+After calibration, use a third known load as a validation check if convenient.
+If the result is not better than the factory conversion, reset to factory and
+try again with a heavier or more accurately measured reference.
+
+### Advanced manual calibration
+
+**Advanced manual calibration** exposes the fitted raw-zero intercept and a
+loaded reference point for diagnostics. Normal setup never requires copying raw
+sensor readings or editing these values.
 
 The propane calculation is:
 
 ```text
-gross_lb = (raw - raw_zero) × reference_weight_lb / (raw_reference - raw_zero)
+gross_lb = max(0, (raw - raw_zero) × reference_weight_lb / (raw_reference - raw_zero))
 propane_lb = max(0, gross_lb - tare_lb)
 propane_percent = propane_lb / capacity_lb × 100
 ```
 
-Percentage is clamped to 0–100%, while gross and propane weight remain available
-for troubleshooting.
+Percentage is clamped to 0–100%. Raw scale readings remain available for
+troubleshooting even when a below-zero converted gross weight is displayed as
+zero.
 
 ## Protocol
 
@@ -153,8 +188,9 @@ The official app's factory conversion is equivalent to:
 gross_kg = (raw - 64) / 256
 ```
 
-Those values are this integration's defaults. Guided two-point calibration
-replaces them with measurements from the individual scale.
+Those values are this integration's defaults. Guided calibration first records
+the unloaded sentinel, then replaces the factory conversion using two distinct
+loaded measurements from the individual scale.
 
 ## Troubleshooting
 

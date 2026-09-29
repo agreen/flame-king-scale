@@ -9,7 +9,12 @@ from const import (
     DEFAULT_REFERENCE_WEIGHT,
     default_tare_for_capacity,
 )
-from protocol import InvalidPacketError, calculate_tank_state, decode_packet
+from protocol import (
+    InvalidPacketError,
+    calculate_tank_state,
+    calibration_from_loaded_points,
+    decode_packet,
+)
 
 OFFICIAL_LB_PER_KG = 2.2046226218
 
@@ -78,6 +83,48 @@ class ProtocolTests(unittest.TestCase):
                         abs_tol=1e-12,
                     )
                 )
+
+    def test_factory_conversion_clips_unloaded_negative_weight(self) -> None:
+        state = calculate_tank_state(
+            0,
+            raw_zero=DEFAULT_RAW_ZERO,
+            raw_reference=DEFAULT_RAW_REFERENCE,
+            reference_weight_lb=DEFAULT_REFERENCE_WEIGHT,
+            tare_weight_lb=17,
+            capacity_lb=20,
+        )
+        self.assertEqual(state.gross_weight_lb, 0)
+
+    def test_calibration_uses_two_loaded_points(self) -> None:
+        raw_zero, raw_reference, reference_weight = calibration_from_loaded_points(
+            2154, 18.0, 4476, 38.0
+        )
+        self.assertEqual(raw_zero, 64)
+        self.assertEqual(raw_reference, 4476)
+        self.assertEqual(reference_weight, 38.0)
+
+        for raw, expected_weight in ((2154, 18.0), (4476, 38.0)):
+            state = calculate_tank_state(
+                raw,
+                raw_zero=raw_zero,
+                raw_reference=raw_reference,
+                reference_weight_lb=reference_weight,
+                tare_weight_lb=18,
+                capacity_lb=20,
+            )
+            self.assertTrue(
+                math.isclose(state.gross_weight_lb, expected_weight, abs_tol=0.01)
+            )
+
+    def test_loaded_calibration_rejects_reversed_or_duplicate_points(self) -> None:
+        invalid = (
+            (1000, 10.0, 1000, 20.0),
+            (1000, 10.0, 2000, 10.0),
+            (2000, 10.0, 1000, 20.0),
+        )
+        for points in invalid:
+            with self.subTest(points=points), self.assertRaises(ValueError):
+                calibration_from_loaded_points(*points)
 
     def test_calculation_clamps_propane_and_percentage(self) -> None:
         empty = calculate_tank_state(

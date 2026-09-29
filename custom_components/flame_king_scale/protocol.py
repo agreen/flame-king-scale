@@ -59,7 +59,29 @@ def calculate_tank_state(
     if capacity_lb <= 0:
         raise ValueError("Tank capacity must be greater than zero")
 
-    gross = (raw - raw_zero) * reference_weight_lb / span
+    # The stock firmware can report a literal raw zero while unloaded even
+    # though Flame King's loaded conversion extrapolates to zero at raw 64.
+    gross = max(0.0, (raw - raw_zero) * reference_weight_lb / span)
     propane = max(0.0, gross - tare_weight_lb)
     percent = min(100.0, max(0.0, propane / capacity_lb * 100.0))
     return TankState(gross, propane, percent)
+
+
+def calibration_from_loaded_points(
+    first_raw: int,
+    first_weight_lb: float,
+    second_raw: int,
+    second_weight_lb: float,
+) -> tuple[int, int, float]:
+    """Derive the linear conversion from two distinct, non-zero loads."""
+    raw_delta = second_raw - first_raw
+    weight_delta = second_weight_lb - first_weight_lb
+    if raw_delta == 0 or weight_delta == 0:
+        raise ValueError("Calibration loads and raw readings must differ")
+    if raw_delta * weight_delta <= 0:
+        raise ValueError("The heavier load must produce the larger raw reading")
+
+    raw_zero = round(first_raw - first_weight_lb * raw_delta / weight_delta)
+    if raw_zero == second_raw:
+        raise ValueError("Calibration produced a degenerate raw span")
+    return raw_zero, second_raw, second_weight_lb

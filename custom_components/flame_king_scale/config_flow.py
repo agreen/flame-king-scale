@@ -43,6 +43,7 @@ from .const import (
     default_tare_for_capacity,
 )
 from .discovery import is_flame_king_candidate
+from .protocol import calibration_from_loaded_points
 
 
 class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -233,7 +234,9 @@ class FlameKingOptionsFlow(OptionsFlow):
 
     def __init__(self) -> None:
         """Initialize the guided calibration state."""
-        self._captured_raw_zero: int | None = None
+        self._captured_unloaded_raw: int | None = None
+        self._first_calibration_raw: int | None = None
+        self._first_calibration_weight: float | None = None
         self._pending_tank_options: dict[str, Any] | None = None
         self._pending_tare_override: float | None = None
 
@@ -402,7 +405,7 @@ class FlameKingOptionsFlow(OptionsFlow):
     async def async_step_calibrate(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Capture the unloaded scale reading."""
+        """Capture the unloaded sentinel without using it as a loaded point."""
         manager = self.config_entry.runtime_data
         manager.async_trigger_poll()
         errors: dict[str, str] = {}
@@ -411,7 +414,7 @@ class FlameKingOptionsFlow(OptionsFlow):
             if packet is None:
                 errors["base"] = "no_live_reading"
             else:
-                self._captured_raw_zero = packet.raw
+                self._captured_unloaded_raw = packet.raw
                 return self.async_show_menu(
                     step_id="calibration_reference",
                     menu_options=["calibrate_empty_tank", "calibrate_known_weight"],
@@ -430,23 +433,25 @@ class FlameKingOptionsFlow(OptionsFlow):
     async def async_step_calibrate_empty_tank(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Capture a reference reading using the configured empty cylinder."""
-        return await self._async_capture_reference(user_input)
+        """Capture the first loaded point using the configured empty cylinder."""
+        return await self._async_capture_first_loaded_point(user_input)
 
     async def async_step_calibrate_known_weight(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Capture a reference reading using a user-supplied known weight."""
-        return await self._async_capture_reference(user_input, request_weight=True)
+        """Capture the first loaded point using a user-supplied known weight."""
+        return await self._async_capture_first_loaded_point(
+            user_input, request_weight=True
+        )
 
-    async def _async_capture_reference(
+    async def _async_capture_first_loaded_point(
         self,
         user_input: dict[str, Any] | None,
         *,
         request_weight: bool = False,
     ) -> ConfigFlowResult:
-        """Capture and save the loaded calibration point."""
-        if self._captured_raw_zero is None:
+        """Capture the first of two non-zero calibration loads."""
+        if self._captured_unloaded_raw is None:
             return await self.async_step_calibrate()
 
         current = self._current_options()
@@ -461,22 +466,17 @@ class FlameKingOptionsFlow(OptionsFlow):
             packet = await manager.async_request_refresh()
             if packet is None:
                 errors["base"] = "no_live_reading"
-            elif packet.raw == self._captured_raw_zero:
-                errors["base"] = "same_calibration_points"
+            elif packet.raw <= self._captured_unloaded_raw:
+                errors["base"] = "load_not_detected"
             else:
-                current.update(
-                    {
-                        CONF_RAW_ZERO: self._captured_raw_zero,
-                        CONF_RAW_REFERENCE: packet.raw,
-                        CONF_REFERENCE_WEIGHT: reference_weight,
-                    }
-                )
-                return self.async_create_entry(title="", data=current)
+                self._first_calibration_raw = packet.raw
+                self._first_calibration_weight = reference_weight
+                return await self.async_step_calibrate_second_load()
 
         schema: dict[Any, Any] = {}
         if request_weight:
             schema[vol.Required(CONF_REFERENCE_WEIGHT)] = NumberSelector(
-                NumberSelectorConfig(min=0.01, max=500, step=0.01)
+                NumberSelectorConfig(min=0.01, max=500, step=0.1)
             )
 
         live_raw = self._live_raw()
@@ -490,6 +490,64 @@ class FlameKingOptionsFlow(OptionsFlow):
             description_placeholders={
                 "raw": str(live_raw) if live_raw is not None else "unavailable",
                 "tare": f"{reference_weight:.2f}",
+            },
+        )
+
+    async def async_step_calibrate_second_load(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Capture a second known load and fit the loaded measurement line."""
+        if (
+            self._first_calibration_raw is None
+            or self._first_calibration_weight is None
+        ):
+            return await self.async_step_calibrate()
+
+        manager = self.config_entry.runtime_data
+        manager.async_trigger_poll()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            packet = await manager.async_request_refresh()
+            if packet is None:
+                errors["base"] = "no_live_reading"
+            else:
+                try:
+                    raw_zero, raw_reference, reference_weight = (
+                        calibration_from_loaded_points(
+                            self._first_calibration_raw,
+                            self._first_calibration_weight,
+                            packet.raw,
+                            float(user_input[CONF_REFERENCE_WEIGHT]),
+                        )
+                    )
+                except ValueError:
+                    errors["base"] = "invalid_loaded_points"
+                else:
+                    current = self._current_options()
+                    current.update(
+                        {
+                            CONF_RAW_ZERO: raw_zero,
+                            CONF_RAW_REFERENCE: raw_reference,
+                            CONF_REFERENCE_WEIGHT: reference_weight,
+                        }
+                    )
+                    return self.async_create_entry(title="", data=current)
+
+        live_raw = self._live_raw()
+        return self.async_show_form(
+            step_id="calibrate_second_load",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_REFERENCE_WEIGHT): NumberSelector(
+                        NumberSelectorConfig(min=0.01, max=500, step=0.1)
+                    )
+                }
+            ),
+            errors=errors,
+            description_placeholders={
+                "first_weight": f"{self._first_calibration_weight:.1f}",
+                "first_raw": str(self._first_calibration_raw),
+                "raw": str(live_raw) if live_raw is not None else "unavailable",
             },
         )
 
@@ -507,7 +565,7 @@ class FlameKingOptionsFlow(OptionsFlow):
                 return self.async_create_entry(title="", data=current)
 
         positive = NumberSelector(NumberSelectorConfig(min=0.01, max=500, step=0.01))
-        raw = NumberSelector(NumberSelectorConfig(min=0, max=65535, step=1))
+        raw = NumberSelector(NumberSelectorConfig(min=-65535, max=65535, step=1))
         schema = vol.Schema(
             {
                 vol.Required(CONF_RAW_ZERO, default=current[CONF_RAW_ZERO]): raw,

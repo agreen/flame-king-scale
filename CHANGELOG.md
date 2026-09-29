@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here.
 
+## 0.6.4
+
+- Clip below-zero converted gross weight to zero while retaining the raw value
+  for diagnostics.
+- Treat an unloaded raw zero as a firmware no-load check instead of forcing it
+  onto the loaded calibration line.
+- Fit guided calibration from two distinct known loads, removing the hard-coded
+  factory offset when a successful household calibration is saved.
+- Reorganize calibration documentation around factory, guided household, and
+  advanced diagnostic paths with practical reference-weight guidance.
+
 ## 0.6.3
 
 - Keep Request reading as a one-shot refresh that disconnects after receiving a

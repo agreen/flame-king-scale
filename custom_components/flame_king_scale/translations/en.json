@@ -37,6 +37,8 @@
   },
   "options": {
     "error": {
+      "invalid_loaded_points": "The two loaded measurements do not form a valid increasing calibration. Use two different known weights and let each reading settle.",
+      "load_not_detected": "The loaded reading was not greater than the unloaded reading. Check placement and try again.",
       "no_live_reading": "No live reading is available. Turn on the scale, make sure no other app is connected, and try again.",
       "same_calibration_points": "Raw zero and raw reference must be different."
     },
@@ -51,7 +53,7 @@
         },
         "menu_option_descriptions": {
           "advanced": "View or enter the raw calibration values directly.",
-          "calibrate": "Capture zero and a known weight directly from the connected scale.",
+          "calibrate": "Check the unloaded state, then fit the scale from two known loaded weights.",
           "reset_calibration": "Erase the scale calibration and restore Flame King's factory conversion.",
           "power": "Control scheduled readings and change-monitoring behavior.",
           "tank": "Choose the tank size and optionally override its typical empty weight."
@@ -85,8 +87,8 @@
         "title": "Polling and battery"
       },
       "calibrate": {
-        "description": "Turn on the scale, remove the cylinder and every other load, and wait for it to settle. Then submit to capture zero automatically. Current raw reading: {raw}.",
-        "title": "Step 1: Capture empty scale"
+        "description": "Turn on the scale, remove every load, and wait for it to settle. Submit to record the firmware's no-load state. This check is used to recognize an empty platform; it is not treated as a loaded calibration point. Current raw reading: {raw}.",
+        "title": "Step 1: Check unloaded scale"
       },
       "reset_calibration": {
         "description": "Submit to erase the current load-cell calibration and restore the Flame King factory values (raw zero 64; raw reference 1600 at 6 kg). Tank tare, propane capacity, name, room, and polling settings are not changed. You can run Guided scale calibration afterward to measure this individual scale again.",
@@ -101,26 +103,33 @@
           "calibrate_empty_tank": "Use the configured stamped tare weight as the known load.",
           "calibrate_known_weight": "Enter the weight of another accurately known load."
         },
-        "title": "Step 2: Choose a reference weight"
+        "title": "Step 2: Choose the first loaded weight"
       },
       "calibrate_empty_tank": {
         "description": "Place the confirmed-empty cylinder on the scale, disconnected from hoses or accessories, and wait for the reading to settle. Its configured tare weight of {tare} lb will be used automatically. Current raw reading: {raw}.",
-        "title": "Capture empty cylinder"
+        "title": "Capture first load: empty cylinder"
       },
       "calibrate_known_weight": {
         "data": {
           "reference_weight_lb": "Actual known weight (lb)"
         },
         "description": "Place an accurately known weight on the scale and wait for the reading to settle. Enter only its real weight; the raw reading is captured automatically. Current raw reading: {raw}.",
-        "title": "Capture known weight"
+        "title": "Capture first known load"
+      },
+      "calibrate_second_load": {
+        "data": {
+          "reference_weight_lb": "Actual total weight on scale (lb)"
+        },
+        "description": "First point captured: {first_weight} lb at raw {first_raw}. Replace it with a different known load, or add a known weight and enter the new total. A household reference near the normal 20–40 lb working range is adequate; weigh it separately and round honestly to about 0.1 lb. Current raw reading: {raw}.",
+        "title": "Step 3: Capture second loaded weight"
       },
       "advanced": {
         "data": {
           "raw_reference": "Raw reading with reference weight",
-          "raw_zero": "Raw reading with empty scale",
+          "raw_zero": "Calculated raw zero intercept",
           "reference_weight_lb": "Known reference weight (lb)"
         },
-        "description": "Diagnostic fallback for manually entering the two raw calibration points. Guided calibration is recommended.",
+        "description": "Diagnostic fallback for manually entering the fitted raw-zero intercept and one loaded reference point. Guided calibration is recommended.",
         "title": "Advanced manual calibration"
       }
     }
