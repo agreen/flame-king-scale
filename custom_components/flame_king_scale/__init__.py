@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .bluetooth import FlameKingBluetoothManager
-from .const import PLATFORMS
+from .const import DOMAIN, PLATFORMS
 
 type FlameKingConfigEntry = ConfigEntry[FlameKingBluetoothManager]
 
@@ -15,6 +16,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: FlameKingConfigEntry) ->
     """Set up a Flame King scale from a config entry."""
     manager = FlameKingBluetoothManager(hass, entry)
     entry.runtime_data = manager
+    registry = er.async_get(hass)
+    if old_capacity_entity := registry.async_get_entity_id(
+        "number", DOMAIN, f"{entry.unique_id}_capacity"
+    ):
+        registry.async_remove(old_capacity_entity)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await manager.async_start()
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))

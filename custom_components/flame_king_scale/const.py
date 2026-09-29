@@ -3,7 +3,7 @@
 from typing import Final
 
 DOMAIN: Final = "flame_king_scale"
-PLATFORMS: Final = ["sensor", "binary_sensor", "number", "button"]
+PLATFORMS: Final = ["sensor", "binary_sensor", "select", "number", "button"]
 
 DEVICE_NAME: Final = "Gas Monitor"
 MODEL: Final = "YSNPS1"
@@ -40,6 +40,7 @@ DEFAULT_STABILITY_VARIANCE: Final = 1.0
 DEFAULT_FLOW_DETECTION_TIME: Final = 60.0
 DEFAULT_FLOW_MIN_RATE: Final = 0.5
 DEFAULT_LONG_USE_TIME: Final = 120.0
+TANK_CAPACITY_OPTIONS: Final = (20.0, 30.0, 40.0)
 
 DEFAULT_OPTIONS: Final = {
     CONF_RAW_ZERO: DEFAULT_RAW_ZERO,

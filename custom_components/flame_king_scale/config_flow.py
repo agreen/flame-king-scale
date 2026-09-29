@@ -39,6 +39,7 @@ from .const import (
     DEVICE_NAME,
     DOMAIN,
     SERVICE_UUID,
+    TANK_CAPACITY_OPTIONS,
 )
 from .discovery import is_flame_king_candidate
 
@@ -99,15 +100,24 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
                     options = {
                         **DEFAULT_OPTIONS,
                         CONF_TARE_WEIGHT: user_input[CONF_TARE_WEIGHT],
-                        CONF_CAPACITY: user_input[CONF_CAPACITY],
+                        CONF_CAPACITY: float(user_input[CONF_CAPACITY]),
                     }
                     return self.async_create_entry(
                         title=name,
                         data=data,
                         options=options,
                     )
-        positive = NumberSelector(
+        tare_weight = NumberSelector(
             NumberSelectorConfig(min=0.01, max=500, step=0.01)
+        )
+        tank_size = SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    {"value": f"{value:g}", "label": f"{value:g} lb"}
+                    for value in TANK_CAPACITY_OPTIONS
+                ],
+                custom_value=True,
+            )
         )
         return self.async_show_form(
             step_id="bluetooth_confirm",
@@ -118,11 +128,11 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(
                         CONF_TARE_WEIGHT,
                         default=DEFAULT_OPTIONS[CONF_TARE_WEIGHT],
-                    ): positive,
+                    ): tare_weight,
                     vol.Required(
                         CONF_CAPACITY,
-                        default=DEFAULT_OPTIONS[CONF_CAPACITY],
-                    ): positive,
+                        default=f"{DEFAULT_OPTIONS[CONF_CAPACITY]:g}",
+                    ): tank_size,
                 }
             ),
             errors=errors,
@@ -247,6 +257,7 @@ class FlameKingOptionsFlow(OptionsFlow):
         """Configure adaptive polling and stability behavior."""
         current = self._current_options()
         if user_input is not None:
+            user_input[CONF_CAPACITY] = float(user_input[CONF_CAPACITY])
             current.update(user_input)
             return self.async_create_entry(title="", data=current)
 
@@ -300,6 +311,15 @@ class FlameKingOptionsFlow(OptionsFlow):
             return self.async_create_entry(title="", data=current)
 
         positive = NumberSelector(NumberSelectorConfig(min=0.01, max=500, step=0.01))
+        tank_size = SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    {"value": f"{value:g}", "label": f"{value:g} lb"}
+                    for value in TANK_CAPACITY_OPTIONS
+                ],
+                custom_value=True,
+            )
+        )
         return self.async_show_form(
             step_id="tank",
             data_schema=vol.Schema(
@@ -308,8 +328,8 @@ class FlameKingOptionsFlow(OptionsFlow):
                         CONF_TARE_WEIGHT, default=current[CONF_TARE_WEIGHT]
                     ): positive,
                     vol.Required(
-                        CONF_CAPACITY, default=current[CONF_CAPACITY]
-                    ): positive,
+                        CONF_CAPACITY, default=f"{float(current[CONF_CAPACITY]):g}"
+                    ): tank_size,
                 }
             ),
         )

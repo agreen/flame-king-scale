@@ -24,10 +24,11 @@ six-byte weight packets.
 - Raw scale reading (for calibration and troubleshooting)
 - Request reading button
 
-The scale device exposes configuration-number entities for tare weight and
-propane capacity. Guided calibration captures raw readings directly from the
-scale; its manual calibration entities are disabled by default and remain
-available for diagnostics.
+The scale device exposes a tank-size dropdown for propane capacity and a
+separate configuration value for the cylinder's stamped tare weight. Guided
+calibration captures raw readings directly from the scale; its manual
+calibration entities are disabled by default and remain available for
+diagnostics.
 
 ## Battery-friendly polling
 
@@ -97,8 +98,8 @@ Manual installation is also supported: copy
    wizard lets you name the scale, assign its room, and enter the cylinder's
    stamped tare weight and propane capacity before setup finishes.
 2. Open the integration's **Configure** dialog and choose **Tank settings**.
-   Enter the cylinder's stamped tare weight (`TW`) and its propane capacity
-   (normally 20 lb for a grill cylinder).
+   Choose its propane capacity from the tank-size dropdown (normally 20 lb for
+   a grill cylinder) and enter the cylinder's stamped tare weight (`TW`).
 3. Choose **Guided scale calibration**. With the scale unloaded, capture zero.
 4. Add a reference load and capture it when the reading settles. You can use:
    - a confirmed-empty cylinder, disconnected from hoses and accessories; its

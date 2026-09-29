@@ -13,7 +13,7 @@
       "bluetooth_confirm": {
         "data": {
           "area_id": "Room",
-          "capacity_lb": "Propane tank capacity (lb)",
+          "capacity_lb": "Tank size (propane capacity)",
           "name": "Scale name",
           "tare_weight_lb": "Cylinder stamped tare weight (lb)"
         },
@@ -58,7 +58,7 @@
       },
       "tank": {
         "data": {
-          "capacity_lb": "Propane capacity (lb)",
+          "capacity_lb": "Tank size (propane capacity)",
           "tare_weight_lb": "Cylinder stamped tare weight (lb)"
         },
         "description": "Enter the cylinder's stamped TW, not an estimate. A typical 20 lb grill cylinder may use an 18 lb tare, but the cylinder stamp is authoritative.",
@@ -121,8 +121,10 @@
     "button": {
       "refresh": {"name": "Request reading"}
     },
+    "select": {
+      "tank_size": {"name": "Tank size"}
+    },
     "number": {
-      "capacity": {"name": "Propane capacity"},
       "flow_detection_time": {"name": "Gas-flow detection time"},
       "minimum_flow_rate": {"name": "Minimum gas-flow rate"},
       "long_use_time": {"name": "Long-use warning time"},

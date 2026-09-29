@@ -13,7 +13,6 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .bluetooth import FlameKingBluetoothManager
 from .const import (
-    CONF_CAPACITY,
     CONF_FLOW_DETECTION_TIME,
     CONF_FLOW_MIN_RATE,
     CONF_LONG_USE_TIME,
@@ -46,16 +45,6 @@ NUMBER_DESCRIPTIONS = (
         native_step=0.01,
         native_unit_of_measurement=UnitOfMass.POUNDS,
         icon="mdi:weight",
-    ),
-    FlameKingNumberDescription(
-        key="capacity",
-        translation_key="capacity",
-        option_key=CONF_CAPACITY,
-        native_min_value=0.01,
-        native_max_value=500,
-        native_step=0.01,
-        native_unit_of_measurement=UnitOfMass.POUNDS,
-        icon="mdi:propane-tank",
     ),
     FlameKingNumberDescription(
         key="poll_interval",

@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+## 0.6.1
+
+- Replace the propane-capacity slider with a Tank size dropdown for the Flame
+  King app's 20 lb, 30 lb, and 40 lb sizes.
+- Preserve an existing custom capacity in the dropdown and allow custom values
+  through the integration's Tank settings flow.
+
 ## 0.6.0
 
 - Change the battery-friendly regular reading interval to 60 minutes by default.
