@@ -16,8 +16,10 @@ async def async_setup_entry(
     entry: ConfigEntry[FlameKingBluetoothManager],
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up the on-demand reading button."""
-    async_add_entities([FlameKingRefreshButton(entry)])
+    """Set up the on-demand reading and live-monitoring buttons."""
+    async_add_entities(
+        [FlameKingRefreshButton(entry), FlameKingLiveMonitorButton(entry)]
+    )
 
 
 class FlameKingRefreshButton(ButtonEntity):
@@ -34,5 +36,23 @@ class FlameKingRefreshButton(ButtonEntity):
         self._attr_device_info = scale_device_info(entry)
 
     async def async_press(self) -> None:
-        """Wake the polling loop and wait for a fresh packet."""
-        await self.manager.async_request_refresh()
+        """Fetch one fresh packet without forcing a live session."""
+        await self.manager.async_request_once()
+
+
+class FlameKingLiveMonitorButton(ButtonEntity):
+    """Start or extend a deliberate live-monitoring session."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "live_monitor"
+    _attr_icon = "mdi:access-point"
+
+    def __init__(self, entry: ConfigEntry[FlameKingBluetoothManager]) -> None:
+        """Initialize the button."""
+        self.manager = entry.runtime_data
+        self._attr_unique_id = f"{entry.unique_id}_live_monitor"
+        self._attr_device_info = scale_device_info(entry)
+
+    async def async_press(self) -> None:
+        """Connect now and remain live until the configured quiet time passes."""
+        await self.manager.async_start_live_monitoring()

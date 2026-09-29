@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## 0.6.3
+
+- Keep Request reading as a one-shot refresh that disconnects after receiving a
+  fresh scale packet.
+- Add a separate Start live monitoring button that connects immediately and
+  stays connected through the configured quiet period.
+- Let another Start live monitoring press extend an already-active session.
+
 ## 0.6.2
 
 - Make tank size the primary setup choice and automatically apply its typical

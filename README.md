@@ -22,7 +22,7 @@ six-byte weight packets.
 - Gas-use duration
 - Battery
 - Raw scale reading (for calibration and troubleshooting)
-- Request reading button
+- Request reading and Start live monitoring buttons
 
 The scale device exposes a tank-size dropdown for propane capacity. Selecting
 20 lb, 30 lb, or 40 lb supplies the matching typical empty-cylinder weight;
@@ -43,8 +43,10 @@ resetting. The connection closes only after both the weight and detected flow
 have been quiet for 5 minutes.
 
 The regular interval, stable time, and variance are configurable from the
-device page or **Configure → Polling and battery**. **Request reading** starts an
-immediate sample without changing the schedule. The most recent values remain
+device page or **Configure → Polling and battery**. **Request reading** fetches
+one fresh sample without changing the schedule. **Start live monitoring**
+connects immediately and stays connected until the configured quiet period has
+passed; pressing it again extends that window. The most recent values remain
 available in Home Assistant while the scale sleeps.
 
 The **Gas flowing** binary sensor is designed as an automation trigger. The

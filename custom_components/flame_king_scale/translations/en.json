@@ -127,6 +127,7 @@
   },
   "entity": {
     "button": {
+      "live_monitor": {"name": "Start live monitoring"},
       "refresh": {"name": "Request reading"}
     },
     "select": {

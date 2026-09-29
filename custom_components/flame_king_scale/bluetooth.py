@@ -65,6 +65,8 @@ class FlameKingBluetoothManager:
         self._packet_generation = 0
         self._last_session_raw: int | None = None
         self._session_active = False
+        self._one_shot_requested = False
+        self._live_monitor_requested = asyncio.Event()
         self._task: asyncio.Task[None] | None = None
         self._client: BleakClientWithServiceCache | None = None
         self._usage = PropaneUsageTracker()
@@ -110,6 +112,25 @@ class FlameKingBluetoothManager:
     ) -> ScalePacket | None:
         """Request a poll and wait for a new packet."""
         generation = self._packet_generation
+        self.async_trigger_poll()
+        return await self._async_wait_for_new_packet(generation, timeout)
+
+    async def async_request_once(
+        self, timeout: float = _FIRST_PACKET_TIMEOUT
+    ) -> ScalePacket | None:
+        """Request one fresh packet without starting an automatic live session."""
+        generation = self._packet_generation
+        if not self._session_active:
+            self._one_shot_requested = True
+        self.async_trigger_poll()
+        return await self._async_wait_for_new_packet(generation, timeout)
+
+    async def async_start_live_monitoring(
+        self, timeout: float = _FIRST_PACKET_TIMEOUT
+    ) -> ScalePacket | None:
+        """Request or extend a deliberate live-monitoring session."""
+        generation = self._packet_generation
+        self._live_monitor_requested.set()
         self.async_trigger_poll()
         return await self._async_wait_for_new_packet(generation, timeout)
 
@@ -234,19 +255,28 @@ class FlameKingBluetoothManager:
             if packet is None:
                 return
 
+            one_shot = self._one_shot_requested
+            self._one_shot_requested = False
+            force_live = self._live_monitor_requested.is_set()
+            self._live_monitor_requested.clear()
+            if one_shot and not force_live:
+                return
+
             tolerance = self._raw_tolerance()
             changed = self._last_session_raw is not None and has_significant_change(
                 self._last_session_raw, packet.raw, tolerance
             )
             if not changed:
                 changed = await self._async_quiet_sample(packet.raw, tolerance)
-            if changed and self.packet is not None:
+            if (force_live or changed) and self.packet is not None:
                 await self._async_monitor_until_stable(self.packet.raw, tolerance)
         except asyncio.CancelledError:
             raise
         except Exception as err:  # BLE backends expose several exception types.
             _LOGGER.debug("Flame King polling session failed: %s", err)
         finally:
+            self._one_shot_requested = False
+            self._live_monitor_requested.clear()
             if (
                 self.packet is not None
                 and self._packet_generation > session_start_generation
@@ -270,6 +300,9 @@ class FlameKingBluetoothManager:
         deadline = loop.time() + _QUIET_SAMPLE_SECONDS
         generation = self._packet_generation
         while not self._stop.is_set() and not self._disconnected.is_set():
+            if self._live_monitor_requested.is_set():
+                self._live_monitor_requested.clear()
+                return True
             remaining = deadline - loop.time()
             if remaining <= 0:
                 return False
@@ -296,6 +329,9 @@ class FlameKingBluetoothManager:
 
         while not self._stop.is_set() and not self._disconnected.is_set():
             now = loop.time()
+            if self._live_monitor_requested.is_set():
+                self._live_monitor_requested.clear()
+                stable_since = now
             if now - stable_since >= stable_seconds or now >= deadline:
                 return
             packet = await self._async_wait_for_new_packet(generation, 1.0)
