@@ -8,8 +8,7 @@ All notable changes to this project are documented here.
   `!include_dir_named` and `!include_dir_merge_named` formats.
 - Keep the scale calibration independent from the empty-box baseline, detect
   package presence from normal hourly readings, and request a settled one-shot
-  reading 10 seconds after the Aqara contact sensor changes from open to
-  closed, provided the box remains closed.
+  reading 10 seconds after a box-close event.
 - Emit portable package-detected and package-removed events for user-owned
   notification automations.
 
