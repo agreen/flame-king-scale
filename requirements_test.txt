@@ -1,0 +1,14 @@
+# Test dependencies (CI installs this file). Home Assistant itself is pulled in
+# by the plugin; the Bluetooth packages below are the ones Home Assistant's
+# bluetooth component requires, pinned to the versions the tests were run with.
+pytest-homeassistant-custom-component
+ruff
+aiousbwatcher
+pyserial
+bleak==2.1.1
+bleak-retry-connector==4.4.3
+bluetooth-adapters==2.1.0
+bluetooth-auto-recovery==1.5.3
+bluetooth-data-tools==1.28.4
+dbus-fast==3.1.2
+habluetooth==5.8.0

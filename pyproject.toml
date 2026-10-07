@@ -1,6 +1,7 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["custom_components/flame_king_scale"]
+pythonpath = ["."]
+asyncio_mode = "auto"
 
 [tool.ruff]
 target-version = "py313"

@@ -3,13 +3,13 @@
 import math
 import unittest
 
-from const import (
+from custom_components.flame_king_scale.const import (
     DEFAULT_RAW_REFERENCE,
     DEFAULT_RAW_ZERO,
     DEFAULT_REFERENCE_WEIGHT,
     default_tare_for_capacity,
 )
-from protocol import (
+from custom_components.flame_king_scale.protocol import (
     InvalidPacketError,
     calculate_tank_state,
     calibration_from_loaded_points,

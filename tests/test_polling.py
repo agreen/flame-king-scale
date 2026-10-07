@@ -2,7 +2,10 @@
 
 import unittest
 
-from polling import has_significant_change, raw_tolerance_for_percent
+from custom_components.flame_king_scale.polling import (
+    has_significant_change,
+    raw_tolerance_for_percent,
+)
 
 
 class PollingTests(unittest.TestCase):

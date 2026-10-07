@@ -27,6 +27,7 @@ CONF_STABILITY_VARIANCE: Final = "stability_variance_percent"
 CONF_FLOW_DETECTION_TIME: Final = "flow_detection_seconds"
 CONF_FLOW_MIN_RATE: Final = "flow_minimum_rate_lb_per_hour"
 CONF_LONG_USE_TIME: Final = "long_use_minutes"
+CONF_WEIGHT_UNIT: Final = "weight_unit"
 
 # The official app converts gross kg as (raw - 64) / 256.
 DEFAULT_RAW_ZERO: Final = 64
@@ -40,6 +41,7 @@ DEFAULT_STABILITY_VARIANCE: Final = 1.0
 DEFAULT_FLOW_DETECTION_TIME: Final = 60.0
 DEFAULT_FLOW_MIN_RATE: Final = 0.5
 DEFAULT_LONG_USE_TIME: Final = 120.0
+DEFAULT_WEIGHT_UNIT: Final = "auto"
 TANK_CAPACITY_OPTIONS: Final = (20.0, 30.0, 40.0)
 TANK_TARE_DEFAULTS: Final = {
     20.0: 17.0,
@@ -51,6 +53,7 @@ TANK_TARE_DEFAULTS: Final = {
 def default_tare_for_capacity(capacity: float) -> float:
     """Return the app-style empty-cylinder preset for a tank capacity."""
     return TANK_TARE_DEFAULTS.get(capacity, DEFAULT_TARE_WEIGHT)
+
 
 DEFAULT_OPTIONS: Final = {
     CONF_RAW_ZERO: DEFAULT_RAW_ZERO,
@@ -64,4 +67,5 @@ DEFAULT_OPTIONS: Final = {
     CONF_FLOW_DETECTION_TIME: DEFAULT_FLOW_DETECTION_TIME,
     CONF_FLOW_MIN_RATE: DEFAULT_FLOW_MIN_RATE,
     CONF_LONG_USE_TIME: DEFAULT_LONG_USE_TIME,
+    CONF_WEIGHT_UNIT: DEFAULT_WEIGHT_UNIT,
 }

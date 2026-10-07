@@ -13,7 +13,7 @@
       "bluetooth_confirm": {
         "data": {
           "area_id": "Room",
-          "capacity_lb": "Tank size",
+          "capacity_lb": "Tank size (lb)",
           "name": "Scale name"
         },
         "description": "Set up the discovered Flame King propane scale {name}. Choose the cylinder size; you can optionally override its typical empty weight on the next screen.",
@@ -21,14 +21,10 @@
       },
       "tare_override": {
         "data": {
-          "tare_weight_lb": "Stamped tare override (lb)"
+          "tare_weight_lb": "Stamped tare override"
         },
-        "description": "A {size} lb cylinder will use the typical {tare} lb empty weight. Leave this blank to accept it, or enter the TW stamped on your cylinder if it differs.",
+        "description": "A {size} cylinder will use the typical {tare} empty weight. Leave this blank to accept it, or enter the TW stamped on your cylinder if it differs.",
         "title": "Optional empty-weight override"
-      },
-      "confirm": {
-        "description": "Set up the discovered Flame King propane scale?",
-        "title": "Flame King propane scale discovered"
       },
       "user": {
         "data": {
@@ -66,16 +62,17 @@
       },
       "tank": {
         "data": {
-          "capacity_lb": "Tank size"
+          "capacity_lb": "Tank size (lb)",
+          "weight_unit": "Display unit"
         },
-        "description": "Choose the cylinder's rated propane capacity. Its typical empty weight will be selected automatically on the next screen.",
+        "description": "Choose the cylinder's rated propane capacity (US sizes are in pounds; a custom size is entered in lb). Auto follows Home Assistant's unit system. Its typical empty weight will be selected automatically on the next screen.",
         "title": "Tank settings"
       },
       "tank_tare_override": {
         "data": {
-          "tare_weight_lb": "Stamped tare override (lb)"
+          "tare_weight_lb": "Stamped tare override"
         },
-        "description": "The {size} lb preset uses a {tare} lb empty weight. Leave this blank to use the preset, or enter the TW stamped on your cylinder if it differs.",
+        "description": "The {size} preset uses a {tare} empty weight. Leave this blank to use the preset, or enter the TW stamped on your cylinder if it differs.",
         "title": "Optional empty-weight override"
       },
       "power": {
@@ -84,7 +81,7 @@
           "stability_time_minutes": "Stable time before sleep (minutes)",
           "stability_variance_percent": "Significant weight variance (% of capacity)",
           "flow_detection_seconds": "Gas-flow detection time (seconds)",
-          "flow_minimum_rate_lb_per_hour": "Minimum gas-flow rate (lb/hour)",
+          "flow_minimum_rate_lb_per_hour": "Minimum gas-flow rate (per hour)",
           "long_use_minutes": "Long-use warning time (minutes)"
         },
         "description": "The scale normally connects briefly at the regular interval. A significant weight change keeps it connected until readings remain within the variance and no gas flow is detected for the configured stable time. The long-use setting controls the Extended gas use binary sensor.",
@@ -110,21 +107,21 @@
         "title": "Step 2: Choose the first loaded weight"
       },
       "calibrate_empty_tank": {
-        "description": "Place the confirmed-empty cylinder on the scale, disconnected from hoses or accessories, and wait for the reading to settle. Its configured tare weight of {tare} lb will be used automatically. Current raw reading: {raw}.",
+        "description": "Place the confirmed-empty cylinder on the scale, disconnected from hoses or accessories, and wait for the reading to settle. Its configured tare weight of {tare} will be used automatically. Current raw reading: {raw}.",
         "title": "Capture first load: empty cylinder"
       },
       "calibrate_known_weight": {
         "data": {
-          "reference_weight_lb": "Actual known weight (lb)"
+          "reference_weight_lb": "Actual known weight"
         },
         "description": "Place an accurately known weight on the scale and wait for the reading to settle. Enter only its real weight; the raw reading is captured automatically. Current raw reading: {raw}.",
         "title": "Capture first known load"
       },
       "calibrate_second_load": {
         "data": {
-          "reference_weight_lb": "Actual total weight on scale (lb)"
+          "reference_weight_lb": "Actual total weight on scale"
         },
-        "description": "First point captured: {first_weight} lb at raw {first_raw}. Replace it with a different known load, or add a known weight and enter the new total. A household reference near the normal 20–40 lb working range is adequate; weigh it separately and round honestly to about 0.1 lb. Current raw reading: {raw}.",
+        "description": "First point captured: {first_weight} at raw {first_raw}. Replace it with a different known load, or add a known weight and enter the new total. A household reference near the normal working range (about 9–18 kg / 20–40 lb) is adequate; weigh it separately and round honestly to about 0.1 lb or 0.05 kg. Current raw reading: {raw}.",
         "title": "Step 3: Capture second loaded weight"
       },
       "advanced": {
@@ -140,37 +137,92 @@
   },
   "entity": {
     "button": {
-      "live_monitor": {"name": "Start live monitoring"},
-      "refresh": {"name": "Request reading"}
+      "live_monitor": {
+        "name": "Start live monitoring"
+      },
+      "refresh": {
+        "name": "Request reading"
+      }
     },
     "select": {
-      "tank_size": {"name": "Tank size"}
+      "tank_size": {
+        "name": "Tank size"
+      }
     },
     "number": {
-      "flow_detection_time": {"name": "Gas-flow detection time"},
-      "minimum_flow_rate": {"name": "Minimum gas-flow rate"},
-      "long_use_time": {"name": "Long-use warning time"},
-      "poll_interval": {"name": "Regular reading interval"},
-      "raw_reference": {"name": "Raw reference"},
-      "raw_zero": {"name": "Raw zero"},
-      "reference_weight": {"name": "Reference weight"},
-      "stability_time": {"name": "Stable time before sleep"},
-      "stability_variance": {"name": "Significant weight variance"},
-      "tare_weight": {"name": "Stamped tare override"}
+      "flow_detection_time": {
+        "name": "Gas-flow detection time"
+      },
+      "minimum_flow_rate": {
+        "name": "Minimum gas-flow rate"
+      },
+      "long_use_time": {
+        "name": "Long-use warning time"
+      },
+      "poll_interval": {
+        "name": "Regular reading interval"
+      },
+      "raw_reference": {
+        "name": "Raw reference"
+      },
+      "raw_zero": {
+        "name": "Raw zero"
+      },
+      "reference_weight": {
+        "name": "Reference weight"
+      },
+      "stability_time": {
+        "name": "Stable time before sleep"
+      },
+      "stability_variance": {
+        "name": "Significant weight variance"
+      },
+      "tare_weight": {
+        "name": "Stamped tare override"
+      }
     },
     "sensor": {
-      "battery": {"name": "Battery"},
-      "consumption_rate": {"name": "Propane consumption rate"},
-      "estimated_time_remaining": {"name": "Estimated time remaining"},
-      "gas_use_duration": {"name": "Gas-use duration"},
-      "gross_weight": {"name": "Gross weight"},
-      "propane_percent": {"name": "Propane remaining"},
-      "propane_weight": {"name": "Propane weight"},
-      "raw": {"name": "Raw scale reading"}
+      "battery": {
+        "name": "Battery"
+      },
+      "consumption_rate": {
+        "name": "Propane consumption rate"
+      },
+      "estimated_time_remaining": {
+        "name": "Estimated time remaining"
+      },
+      "gas_use_duration": {
+        "name": "Gas-use duration"
+      },
+      "gross_weight": {
+        "name": "Gross weight"
+      },
+      "propane_percent": {
+        "name": "Propane remaining"
+      },
+      "propane_weight": {
+        "name": "Propane weight"
+      },
+      "raw": {
+        "name": "Raw scale reading"
+      }
     },
     "binary_sensor": {
-      "gas_flowing": {"name": "Gas flowing"},
-      "extended_gas_use": {"name": "Extended gas use"}
+      "gas_flowing": {
+        "name": "Gas flowing"
+      },
+      "extended_gas_use": {
+        "name": "Extended gas use"
+      }
+    }
+  },
+  "selector": {
+    "weight_unit": {
+      "options": {
+        "auto": "Automatic (follow Home Assistant)",
+        "lb": "Pounds (lb)",
+        "kg": "Kilograms (kg)"
+      }
     }
   }
 }

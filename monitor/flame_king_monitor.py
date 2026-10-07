@@ -591,9 +591,7 @@ class FlameKingMonitor:
             asyncio.create_task(self._probe_scheduler(), name="probe-scheduler"),
         ]
         if self.settings.max_runtime_minutes > 0:
-            tasks.append(
-                asyncio.create_task(self._deadline_loop(), name="deadline")
-            )
+            tasks.append(asyncio.create_task(self._deadline_loop(), name="deadline"))
         try:
             await self.stop_event.wait()
         finally:

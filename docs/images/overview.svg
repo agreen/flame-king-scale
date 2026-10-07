@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 220" role="img" aria-labelledby="t d">
+  <title id="t">How the Flame King scale reaches Home Assistant</title>
+  <desc id="d">The scale under the propane cylinder talks Bluetooth Low Energy to a Home Assistant Bluetooth adapter or an ESPHome Bluetooth proxy, which feeds the Flame King integration and its sensors.</desc>
+  <style>
+    .box{fill:#f4f6f8;stroke:#4b5563;stroke-width:1.5;rx:10}
+    .t{font:600 15px system-ui,sans-serif;fill:#111827}
+    .s{font:12px system-ui,sans-serif;fill:#374151}
+    .a{stroke:#2563eb;stroke-width:2;fill:none;marker-end:url(#h)}
+    @media (prefers-color-scheme:dark){.box{fill:#1f2937;stroke:#9ca3af}.t{fill:#f9fafb}.s{fill:#d1d5db}.a{stroke:#60a5fa}}
+  </style>
+  <defs><marker id="h" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#2563eb"/></marker></defs>
+  <rect class="box" x="10" y="50" width="170" height="120" rx="10"/>
+  <text class="t" x="95" y="88" text-anchor="middle">Flame King YSNPS1</text>
+  <text class="s" x="95" y="110" text-anchor="middle">scale under the cylinder</text>
+  <text class="s" x="95" y="128" text-anchor="middle">advertises “Gas Monitor”</text>
+  <text class="s" x="95" y="146" text-anchor="middle">notifies FFE4 packets</text>
+  <rect class="box" x="290" y="50" width="170" height="120" rx="10"/>
+  <text class="t" x="375" y="88" text-anchor="middle">Bluetooth path</text>
+  <text class="s" x="375" y="110" text-anchor="middle">HA adapter, or a</text>
+  <text class="s" x="375" y="128" text-anchor="middle">connectable ESPHome</text>
+  <text class="s" x="375" y="146" text-anchor="middle">Bluetooth proxy</text>
+  <rect class="box" x="570" y="50" width="180" height="120" rx="10"/>
+  <text class="t" x="660" y="88" text-anchor="middle">Home Assistant</text>
+  <text class="s" x="660" y="110" text-anchor="middle">weight, propane %,</text>
+  <text class="s" x="660" y="128" text-anchor="middle">gas flowing, battery,</text>
+  <text class="s" x="660" y="146" text-anchor="middle">time remaining</text>
+  <path class="a" d="M180 110H286"/>
+  <path class="a" d="M460 110H566"/>
+  <text class="s" x="233" y="100" text-anchor="middle">BLE</text>
+  <text class="s" x="513" y="100" text-anchor="middle">local</text>
+</svg>

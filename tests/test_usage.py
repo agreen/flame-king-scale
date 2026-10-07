@@ -2,7 +2,7 @@
 
 import unittest
 
-from usage import PropaneUsageTracker
+from custom_components.flame_king_scale.usage import PropaneUsageTracker
 
 
 class UsageTrackerTests(unittest.TestCase):

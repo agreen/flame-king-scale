@@ -16,11 +16,12 @@ from .const import (
     default_tare_for_capacity,
 )
 from .entity import scale_device_info
+from .units import format_tank_size
 
 
 def _capacity_label(capacity: float) -> str:
-    """Format a propane capacity for the dropdown."""
-    return f"{capacity:g} lb"
+    """Format a propane capacity for the dropdown, for example ``20 lb (9 kg)``."""
+    return format_tank_size(capacity)
 
 
 async def async_setup_entry(
@@ -68,7 +69,7 @@ class FlameKingTankSizeSelect(SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Persist the selected propane capacity."""
-        capacity = float(option.removesuffix(" lb"))
+        capacity = float(option.split(" ", 1)[0])
         options = {**DEFAULT_OPTIONS, **self.entry.options}
         old_capacity = float(options[CONF_CAPACITY])
         old_tare = float(options[CONF_TARE_WEIGHT])

@@ -2,8 +2,8 @@
 
 import unittest
 
-from const import DEVICE_NAME, SERVICE_UUID
-from discovery import is_flame_king_candidate
+from custom_components.flame_king_scale.const import DEVICE_NAME, SERVICE_UUID
+from custom_components.flame_king_scale.discovery import is_flame_king_candidate
 
 
 class DiscoveryTests(unittest.TestCase):

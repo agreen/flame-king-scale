@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here.
 
+## 0.7.0
+
+- Show weights in pounds or kilograms. The new **Display unit** option (Configure
+  → Tank settings) defaults to Automatic, which follows Home Assistant's unit
+  system. Weight sensors, consumption rate, the tare and reference-weight
+  entities, and the setup and calibration forms all honor it; values are still
+  stored and calculated in pounds.
+- Tank sizes now read "20 lb (9 kg)", "30 lb (14 kg)", and "40 lb (18 kg)".
+- Log the first failed connection, missing scale, or silent scale at warning
+  level (later repeats stay at debug) and log recovery; failures were previously
+  invisible. Diagnostics now include the failure count and last error.
+- Add tests for the Bluetooth session logic, config and options flows, and
+  entities; run them with `pytest` in CI along with `ruff format --check`.
+- Document the protocol in `docs/PROTOCOL.md` and expand the README.
+- Remove unused draft icons.
+
 ## 0.6.4
 
 - Clip below-zero converted gross weight to zero while retaining the raw value

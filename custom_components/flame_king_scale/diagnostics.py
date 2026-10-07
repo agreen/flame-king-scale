@@ -23,6 +23,8 @@ async def async_get_config_entry_diagnostics(
         "config": async_redact_data(dict(entry.data), TO_REDACT),
         "options": dict(entry.options),
         "available": manager.available,
+        "consecutive_failures": manager.consecutive_failures,
+        "last_error": manager.last_error,
         "packet": {
             "raw": manager.packet.raw,
             "battery": manager.packet.battery,
