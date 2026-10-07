@@ -11,18 +11,51 @@ connects to the scale over Bluetooth (directly or through a connectable ESPHome
 Bluetooth proxy), subscribes to the `FFE4` characteristic, and decodes the
 six-byte weight packets.
 
+## What this is
+
+The YSNPS1 is a Bluetooth scale that sits under a propane cylinder and is
+normally read through Flame King's phone app. This integration talks to that
+same stock hardware directly, so the tank level, battery, and gas-use state show
+up in Home Assistant with no hardware changes. It reports the *weight* the scale
+measures and derives everything else from it: propane remaining comes from gross
+weight minus the cylinder's empty weight, and gas flow is inferred from a
+sustained downward trend, not reported by the scale.
+
+It is a local-push integration (no cloud, no account). To protect the scale's
+battery it connects only periodically or when the weight changes; see
+[Battery-friendly polling](#battery-friendly-polling). Wire-level details are in
+[docs/PROTOCOL.md](docs/PROTOCOL.md).
+
+## Limitations
+
+- Accuracy is that of a household scale. Factory calibration is good for
+  tracking level and refill timing, not for certified measurement.
+- Readings are only as fresh as the last connection (hourly by default), so
+  short events are seen only when the weight change wakes the integration.
+- Time remaining and consumption rate exist only during a sustained burn.
+- One Bluetooth client at a time: the phone app and Home Assistant cannot both
+  be connected.
+- Tank-size presets cover 20, 30, and 40 lb cylinders (typical empty weights
+  17, 25, and 32 lb); anything else needs the stamped tare override.
+
 ## Entities
 
-- Gross weight
-- Propane remaining
-- Propane remaining percentage
-- Gas flowing and extended gas use
-- Propane consumption rate
-- Estimated time remaining while gas is flowing
-- Gas-use duration
-- Battery
-- Raw scale reading (for calibration and troubleshooting)
-- Request reading and Start live monitoring buttons
+| Entity | Type | Notes |
+| --- | --- | --- |
+| Gross weight | Sensor (lb) | Scale reading after calibration, never below 0 |
+| Propane weight | Sensor (lb) | Gross weight minus empty-cylinder weight |
+| Propane remaining | Sensor (%) | Of the selected tank size, clamped to 0–100 |
+| Propane consumption rate | Sensor (lb/h) | Only while gas is flowing |
+| Estimated time remaining | Sensor (h) | Only during a sustained burn |
+| Gas-use duration | Sensor (min) | Length of the current burn |
+| Battery | Sensor (%) | Reported by the scale |
+| Raw scale reading | Diagnostic sensor | Unconverted load-cell counts |
+| Gas flowing | Binary sensor | Automation trigger for active use |
+| Extended gas use | Binary sensor | On after the long-use time (default 2 h) |
+| Tank size | Select | 20 / 30 / 40 lb |
+| Request reading, Start live monitoring | Buttons | One-shot sample / hold connection open |
+| Polling, flow, and tare settings | Numbers | Configurable from the device page |
+| Raw zero, Raw reference, Reference weight | Numbers | Advanced calibration; disabled by default |
 
 The scale device exposes a tank-size dropdown for propane capacity. Selecting
 20 lb, 30 lb, or 40 lb supplies the matching typical empty-cylinder weight;
@@ -59,6 +92,35 @@ observed consumption rate. It is available only during a sustained burn, when
 there is enough live data for an honest estimate. For comparison, the official
 Flame King app assumes every appliance burns 36,000 BTU/hour; this integration
 does not use that fixed assumption.
+
+### Example automation
+
+Notify when the tank is nearly empty or a burner has been on too long:
+
+```yaml
+automation:
+  - alias: Propane tank low
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.gas_monitor_propane_remaining
+        below: 15
+    actions:
+      - action: notify.notify
+        data:
+          message: Propane is below 15%.
+
+  - alias: Propane burning for a long time
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.gas_monitor_extended_gas_use
+        to: "on"
+    actions:
+      - action: notify.notify
+        data:
+          message: Gas has been flowing for a long time.
+```
+
+Entity IDs follow the name you gave the scale during setup.
 
 ## Requirements
 
@@ -169,28 +231,14 @@ zero.
 
 ## Protocol
 
-The known YSNPS1 packet is six bytes:
+The scale advertises as `Gas Monitor` and notifies six-byte packets
+(`AA 01 LL HH BB CC`: raw little-endian load, battery %, XOR checksum) on
+characteristic `FFE4` of service `FFE0`. The official app's factory conversion is
+`gross_kg = (raw - 64) / 256`, which this integration uses as its default.
 
-```text
-AA 01 LL HH BB CC
-```
-
-- `LL HH`: unsigned little-endian raw load-cell reading
-- `BB`: battery percentage
-- `CC`: XOR of the first five bytes
-
-The scale exposes service `0000FFE0-0000-1000-8000-00805F9B34FB` and notifies
-on characteristic `0000FFE4-0000-1000-8000-00805F9B34FB`.
-
-The official app's factory conversion is equivalent to:
-
-```text
-gross_kg = (raw - 64) / 256
-```
-
-Those values are this integration's defaults. Guided calibration first records
-the unloaded sentinel, then replaces the factory conversion using two distinct
-loaded measurements from the individual scale.
+Full packet layout, worked examples, the raw-zero quirk, the connection policy,
+and a list of what is still unverified are in
+[docs/PROTOCOL.md](docs/PROTOCOL.md).
 
 ## Troubleshooting
 
@@ -201,6 +249,22 @@ loaded measurements from the individual scale.
   with a heavier known weight.
 - If the raw value remains zero, ensure the scale is awake and the load is heavy
   enough to overcome its mechanical dead zone.
+
+## Development
+
+```bash
+pip install ruff
+ruff check .
+PYTHONPATH=custom_components/flame_king_scale python -m unittest discover -s tests
+```
+
+The pure logic (`protocol.py`, `polling.py`, `usage.py`, `discovery.py`) has no
+Home Assistant dependency and is covered by the unit tests. CI additionally runs
+HACS and hassfest validation.
+
+`monitor/` is a separate Windows tool for capturing advertisements and packets
+when investigating the hardware; see [monitor/README.md](monitor/README.md).
+Changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 ## Credits
 
