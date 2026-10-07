@@ -18,6 +18,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     TextSelector,
 )
+from homeassistant.util.unit_system import METRIC_SYSTEM
 
 from .const import (
     CONF_ADDRESS,
@@ -35,6 +36,7 @@ from .const import (
     CONF_STABILITY_VARIANCE,
     CONF_SUGGESTED_AREA,
     CONF_TARE_WEIGHT,
+    CONF_WEIGHT_UNIT,
     DEFAULT_OPTIONS,
     DEVICE_NAME,
     DOMAIN,
@@ -44,6 +46,40 @@ from .const import (
 )
 from .discovery import is_flame_king_candidate
 from .protocol import calibration_from_loaded_points
+from .units import (
+    UNIT_KG,
+    WEIGHT_UNIT_CHOICES,
+    format_tank_size,
+    format_weight,
+    lb_to_unit,
+    resolve_weight_unit,
+    unit_to_lb,
+)
+
+
+def _tank_size_selector() -> SelectSelector:
+    """Return the tank-size dropdown; custom sizes are entered in pounds."""
+    return SelectSelector(
+        SelectSelectorConfig(
+            options=[
+                {"value": f"{value:g}", "label": format_tank_size(value)}
+                for value in TANK_CAPACITY_OPTIONS
+            ],
+            custom_value=True,
+        )
+    )
+
+
+def _weight_selector(unit: str, *, step: float = 0.01) -> NumberSelector:
+    """Return a weight input in the user's unit (stored in pounds)."""
+    return NumberSelector(
+        NumberSelectorConfig(
+            min=round(lb_to_unit(0.01, unit), 3),
+            max=round(lb_to_unit(500, unit), 1),
+            step=step,
+            unit_of_measurement=unit,
+        )
+    )
 
 
 class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -58,6 +94,14 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
         self._discovered: dict[str, BluetoothServiceInfoBleak] = {}
         self._pending_data: dict[str, Any] | None = None
         self._pending_capacity: float | None = None
+
+    @property
+    def _unit(self) -> str:
+        """Return the weight unit implied by the system unit setting."""
+        return resolve_weight_unit(
+            DEFAULT_OPTIONS[CONF_WEIGHT_UNIT],
+            is_metric=self.hass.config.units is METRIC_SYSTEM,
+        )
 
     async def _async_set_discovered_device(
         self, discovery_info: BluetoothServiceInfoBleak
@@ -105,15 +149,7 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
                     self._pending_data = data
                     self._pending_capacity = float(user_input[CONF_CAPACITY])
                     return await self.async_step_tare_override()
-        tank_size = SelectSelector(
-            SelectSelectorConfig(
-                options=[
-                    {"value": f"{value:g}", "label": f"{value:g} lb"}
-                    for value in TANK_CAPACITY_OPTIONS
-                ],
-                custom_value=True,
-            )
-        )
+        tank_size = _tank_size_selector()
         return self.async_show_form(
             step_id="bluetooth_confirm",
             data_schema=vol.Schema(
@@ -139,9 +175,14 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
 
         preset = default_tare_for_capacity(self._pending_capacity)
         if user_input is not None:
+            tare = (
+                unit_to_lb(float(user_input[CONF_TARE_WEIGHT]), self._unit)
+                if CONF_TARE_WEIGHT in user_input
+                else preset
+            )
             options = {
                 **DEFAULT_OPTIONS,
-                CONF_TARE_WEIGHT: float(user_input.get(CONF_TARE_WEIGHT, preset)),
+                CONF_TARE_WEIGHT: round(tare, 4),
                 CONF_CAPACITY: self._pending_capacity,
             }
             return self.async_create_entry(
@@ -153,15 +194,11 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="tare_override",
             data_schema=vol.Schema(
-                {
-                    vol.Optional(CONF_TARE_WEIGHT): NumberSelector(
-                        NumberSelectorConfig(min=0.01, max=500, step=0.01)
-                    )
-                }
+                {vol.Optional(CONF_TARE_WEIGHT): _weight_selector(self._unit)}
             ),
             description_placeholders={
-                "size": f"{self._pending_capacity:g}",
-                "tare": f"{preset:g}",
+                "size": format_tank_size(self._pending_capacity),
+                "tare": format_weight(preset, self._unit),
             },
         )
 
@@ -240,6 +277,14 @@ class FlameKingOptionsFlow(OptionsFlow):
         self._pending_tank_options: dict[str, Any] | None = None
         self._pending_tare_override: float | None = None
 
+    @property
+    def _unit(self) -> str:
+        """Return the weight unit for the saved preference."""
+        return resolve_weight_unit(
+            str(self._current_options()[CONF_WEIGHT_UNIT]),
+            is_metric=self.hass.config.units is METRIC_SYSTEM,
+        )
+
     def _current_options(self) -> dict[str, Any]:
         """Return a complete mutable copy of the current options."""
         return {**DEFAULT_OPTIONS, **self.config_entry.options}
@@ -286,8 +331,11 @@ class FlameKingOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         """Configure adaptive polling and stability behavior."""
         current = self._current_options()
+        unit = self._unit
         if user_input is not None:
-            user_input[CONF_CAPACITY] = float(user_input[CONF_CAPACITY])
+            user_input[CONF_FLOW_MIN_RATE] = round(
+                unit_to_lb(float(user_input[CONF_FLOW_MIN_RATE]), unit), 4
+            )
             current.update(user_input)
             return self.async_create_entry(title="", data=current)
 
@@ -297,36 +345,34 @@ class FlameKingOptionsFlow(OptionsFlow):
                 {
                     vol.Required(
                         CONF_POLL_INTERVAL, default=current[CONF_POLL_INTERVAL]
-                    ): NumberSelector(
-                        NumberSelectorConfig(min=5, max=1440, step=5)
-                    ),
+                    ): NumberSelector(NumberSelectorConfig(min=5, max=1440, step=5)),
                     vol.Required(
                         CONF_STABILITY_TIME, default=current[CONF_STABILITY_TIME]
-                    ): NumberSelector(
-                        NumberSelectorConfig(min=1, max=30, step=1)
-                    ),
+                    ): NumberSelector(NumberSelectorConfig(min=1, max=30, step=1)),
                     vol.Required(
                         CONF_STABILITY_VARIANCE,
                         default=current[CONF_STABILITY_VARIANCE],
-                    ): NumberSelector(
-                        NumberSelectorConfig(min=0.1, max=10, step=0.1)
-                    ),
+                    ): NumberSelector(NumberSelectorConfig(min=0.1, max=10, step=0.1)),
                     vol.Required(
                         CONF_FLOW_DETECTION_TIME,
                         default=current[CONF_FLOW_DETECTION_TIME],
-                    ): NumberSelector(
-                        NumberSelectorConfig(min=15, max=600, step=15)
-                    ),
+                    ): NumberSelector(NumberSelectorConfig(min=15, max=600, step=15)),
                     vol.Required(
-                        CONF_FLOW_MIN_RATE, default=current[CONF_FLOW_MIN_RATE]
+                        CONF_FLOW_MIN_RATE,
+                        default=round(
+                            lb_to_unit(float(current[CONF_FLOW_MIN_RATE]), unit), 2
+                        ),
                     ): NumberSelector(
-                        NumberSelectorConfig(min=0.1, max=20, step=0.1)
+                        NumberSelectorConfig(
+                            min=round(lb_to_unit(0.1, unit), 2),
+                            max=round(lb_to_unit(20, unit), 1),
+                            step=0.05 if unit == UNIT_KG else 0.1,
+                            unit_of_measurement=f"{unit}/h",
+                        )
                     ),
                     vol.Required(
                         CONF_LONG_USE_TIME, default=current[CONF_LONG_USE_TIME]
-                    ): NumberSelector(
-                        NumberSelectorConfig(min=5, max=1440, step=5)
-                    ),
+                    ): NumberSelector(NumberSelectorConfig(min=5, max=1440, step=5)),
                 }
             ),
         )
@@ -344,18 +390,11 @@ class FlameKingOptionsFlow(OptionsFlow):
                 current_tare if abs(current_tare - old_preset) > 0.001 else None
             )
             current[CONF_CAPACITY] = float(user_input[CONF_CAPACITY])
+            current[CONF_WEIGHT_UNIT] = user_input[CONF_WEIGHT_UNIT]
             self._pending_tank_options = current
             return await self.async_step_tank_tare_override()
 
-        tank_size = SelectSelector(
-            SelectSelectorConfig(
-                options=[
-                    {"value": f"{value:g}", "label": f"{value:g} lb"}
-                    for value in TANK_CAPACITY_OPTIONS
-                ],
-                custom_value=True,
-            )
-        )
+        tank_size = _tank_size_selector()
         return self.async_show_form(
             step_id="tank",
             data_schema=vol.Schema(
@@ -363,6 +402,14 @@ class FlameKingOptionsFlow(OptionsFlow):
                     vol.Required(
                         CONF_CAPACITY, default=f"{float(current[CONF_CAPACITY]):g}"
                     ): tank_size,
+                    vol.Required(
+                        CONF_WEIGHT_UNIT, default=str(current[CONF_WEIGHT_UNIT])
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=list(WEIGHT_UNIT_CHOICES),
+                            translation_key="weight_unit",
+                        )
+                    ),
                 }
             ),
         )
@@ -377,28 +424,26 @@ class FlameKingOptionsFlow(OptionsFlow):
         capacity = float(self._pending_tank_options[CONF_CAPACITY])
         preset = default_tare_for_capacity(capacity)
         if user_input is not None:
-            self._pending_tank_options[CONF_TARE_WEIGHT] = float(
-                user_input.get(CONF_TARE_WEIGHT, preset)
+            tare = (
+                unit_to_lb(float(user_input[CONF_TARE_WEIGHT]), self._unit)
+                if CONF_TARE_WEIGHT in user_input
+                else preset
             )
+            self._pending_tank_options[CONF_TARE_WEIGHT] = round(tare, 4)
             return self.async_create_entry(title="", data=self._pending_tank_options)
 
         field = vol.Optional(CONF_TARE_WEIGHT)
         if self._pending_tare_override is not None:
             field = vol.Optional(
-                CONF_TARE_WEIGHT, default=self._pending_tare_override
+                CONF_TARE_WEIGHT,
+                default=round(lb_to_unit(self._pending_tare_override, self._unit), 2),
             )
         return self.async_show_form(
             step_id="tank_tare_override",
-            data_schema=vol.Schema(
-                {
-                    field: NumberSelector(
-                        NumberSelectorConfig(min=0.01, max=500, step=0.01)
-                    )
-                }
-            ),
+            data_schema=vol.Schema({field: _weight_selector(self._unit)}),
             description_placeholders={
-                "size": f"{capacity:g}",
-                "tare": f"{preset:g}",
+                "size": format_tank_size(capacity),
+                "tare": format_weight(preset, self._unit),
             },
         )
 
@@ -460,7 +505,9 @@ class FlameKingOptionsFlow(OptionsFlow):
         errors: dict[str, str] = {}
         reference_weight = float(current[CONF_TARE_WEIGHT])
         if request_weight and user_input is not None:
-            reference_weight = float(user_input[CONF_REFERENCE_WEIGHT])
+            reference_weight = unit_to_lb(
+                float(user_input[CONF_REFERENCE_WEIGHT]), self._unit
+            )
 
         if user_input is not None:
             packet = await manager.async_request_refresh()
@@ -475,21 +522,19 @@ class FlameKingOptionsFlow(OptionsFlow):
 
         schema: dict[Any, Any] = {}
         if request_weight:
-            schema[vol.Required(CONF_REFERENCE_WEIGHT)] = NumberSelector(
-                NumberSelectorConfig(min=0.01, max=500, step=0.1)
+            schema[vol.Required(CONF_REFERENCE_WEIGHT)] = _weight_selector(
+                self._unit, step=0.1
             )
 
         live_raw = self._live_raw()
-        step_id = (
-            "calibrate_known_weight" if request_weight else "calibrate_empty_tank"
-        )
+        step_id = "calibrate_known_weight" if request_weight else "calibrate_empty_tank"
         return self.async_show_form(
             step_id=step_id,
             data_schema=vol.Schema(schema),
             errors=errors,
             description_placeholders={
                 "raw": str(live_raw) if live_raw is not None else "unavailable",
-                "tare": f"{reference_weight:.2f}",
+                "tare": format_weight(reference_weight, self._unit),
             },
         )
 
@@ -517,7 +562,9 @@ class FlameKingOptionsFlow(OptionsFlow):
                             self._first_calibration_raw,
                             self._first_calibration_weight,
                             packet.raw,
-                            float(user_input[CONF_REFERENCE_WEIGHT]),
+                            unit_to_lb(
+                                float(user_input[CONF_REFERENCE_WEIGHT]), self._unit
+                            ),
                         )
                     )
                 except ValueError:
@@ -538,14 +585,16 @@ class FlameKingOptionsFlow(OptionsFlow):
             step_id="calibrate_second_load",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_REFERENCE_WEIGHT): NumberSelector(
-                        NumberSelectorConfig(min=0.01, max=500, step=0.1)
+                    vol.Required(CONF_REFERENCE_WEIGHT): _weight_selector(
+                        self._unit, step=0.1
                     )
                 }
             ),
             errors=errors,
             description_placeholders={
-                "first_weight": f"{self._first_calibration_weight:.1f}",
+                "first_weight": format_weight(
+                    self._first_calibration_weight, self._unit
+                ),
                 "first_raw": str(self._first_calibration_raw),
                 "raw": str(live_raw) if live_raw is not None else "unavailable",
             },

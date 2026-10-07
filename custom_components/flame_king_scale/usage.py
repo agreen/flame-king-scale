@@ -100,9 +100,7 @@ class PropaneUsageTracker:
             return None
 
         group_times = [median(item[0] for item in group) for group in groups]
-        first, middle, last = (
-            median(item[1] for item in group) for group in groups
-        )
+        first, middle, last = (median(item[1] for item in group) for group in groups)
         # Requiring both thirds to fall rejects a tank being lifted or bumped once.
         if middle >= first or last >= middle:
             return None

@@ -70,6 +70,26 @@ class FlameKingBluetoothManager:
         self._task: asyncio.Task[None] | None = None
         self._client: BleakClientWithServiceCache | None = None
         self._usage = PropaneUsageTracker()
+        self.consecutive_failures = 0
+        self.last_error: str | None = None
+
+    def _record_failure(self, message: str, *args: object) -> None:
+        """Log a failed session, loudly the first time and quietly while it repeats."""
+        self.consecutive_failures += 1
+        self.last_error = message % args
+        level = logging.WARNING if self.consecutive_failures == 1 else logging.DEBUG
+        _LOGGER.log(level, "%s: " + message, self.address, *args)
+
+    def _record_success(self) -> None:
+        """Note a healthy packet and announce recovery after a failure streak."""
+        if self.consecutive_failures:
+            _LOGGER.info(
+                "%s: communication restored after %d failed session(s)",
+                self.address,
+                self.consecutive_failures,
+            )
+        self.consecutive_failures = 0
+        self.last_error = None
 
     @property
     def usage(self) -> UsageState:
@@ -164,6 +184,7 @@ class FlameKingBluetoothManager:
             _LOGGER.debug("Ignoring invalid Flame King packet: %s", err)
             return
         self._packet_generation += 1
+        self._record_success()
         self._update_usage()
         self._packet_received.set()
         self.available = True
@@ -231,6 +252,10 @@ class FlameKingBluetoothManager:
                 self._hass, self.address, connectable=True
             )
             if ble_device is None:
+                self._record_failure(
+                    "scale is not currently visible to any Bluetooth adapter or "
+                    "proxy; check it is on, in range, and not held by another app"
+                )
                 return
 
             self._client = await establish_connection(
@@ -253,6 +278,10 @@ class FlameKingBluetoothManager:
                 session_start_generation, _FIRST_PACKET_TIMEOUT
             )
             if packet is None:
+                self._record_failure(
+                    "connected but no valid packet arrived within %.0f seconds",
+                    _FIRST_PACKET_TIMEOUT,
+                )
                 return
 
             one_shot = self._one_shot_requested
@@ -273,7 +302,7 @@ class FlameKingBluetoothManager:
         except asyncio.CancelledError:
             raise
         except Exception as err:  # BLE backends expose several exception types.
-            _LOGGER.debug("Flame King polling session failed: %s", err)
+            self._record_failure("polling session failed: %s", err)
         finally:
             self._one_shot_requested = False
             self._live_monitor_requested.clear()

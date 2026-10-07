@@ -21,10 +21,23 @@ measures and derives everything else from it: propane remaining comes from gross
 weight minus the cylinder's empty weight, and gas flow is inferred from a
 sustained downward trend, not reported by the scale.
 
+![Scale to Bluetooth to Home Assistant](docs/images/overview.svg)
+
 It is a local-push integration (no cloud, no account). To protect the scale's
 battery it connects only periodically or when the weight changes; see
 [Battery-friendly polling](#battery-friendly-polling). Wire-level details are in
 [docs/PROTOCOL.md](docs/PROTOCOL.md).
+
+## Supported hardware
+
+The [Flame King Smart Wireless Propane Tank Scale](https://flamekingproducts.com/products/flame-king-smart-wireless-propane-tank-scale)
+(model YSNPS1). Per the manufacturer it takes two AA batteries and is intended
+for 20, 30, and 40 lb propane cylinders. It advertises as `Gas Monitor`. No
+photograph is bundled here because the manufacturer's page does not offer a
+reusable one; see the link above or the retailer listings.
+
+See [Other projects and models](#other-projects-and-models) for rebrands and
+related work.
 
 ## Limitations
 
@@ -35,8 +48,9 @@ battery it connects only periodically or when the weight changes; see
 - Time remaining and consumption rate exist only during a sustained burn.
 - One Bluetooth client at a time: the phone app and Home Assistant cannot both
   be connected.
-- Tank-size presets cover 20, 30, and 40 lb cylinders (typical empty weights
-  17, 25, and 32 lb); anything else needs the stamped tare override.
+- Tank-size presets cover the US 20, 30, and 40 lb cylinders (typical empty
+  weights 17, 25, and 32 lb); anything else needs the stamped tare override.
+  Cylinder sizes common in other regions are not preset.
 
 ## Entities
 
@@ -63,6 +77,25 @@ the cylinder's stamped `TW` is an optional override when it differs. Guided
 calibration captures raw readings directly from the scale; its manual
 calibration entities are disabled by default and remain available for
 diagnostics.
+
+## Units
+
+Everything is calculated and stored in pounds, then shown in the unit you
+prefer. **Configure → Tank settings → Display unit** accepts **Automatic**
+(the default, which follows Home Assistant's unit system: kilograms for metric,
+pounds otherwise), **Pounds**, or **Kilograms**. The setting applies to:
+
+- Gross weight, Propane weight, and Propane consumption rate (lb/h or kg/h)
+- Stamped tare override, Reference weight, and Minimum gas-flow rate
+- Every weight you type during setup and guided calibration
+
+Tank sizes are always labelled with both units (for example `20 lb (9 kg)`)
+because propane cylinders are sold by nominal US pounds. A custom size is
+entered in pounds. The advanced manual calibration form is a diagnostic view and
+keeps its reference weight in pounds.
+
+Changing the unit changes the unit of the affected entities. Their history in
+the old unit stays as recorded.
 
 ## Battery-friendly polling
 
@@ -202,7 +235,7 @@ Practical second references include two gallon water jugs, a weighed bucket of
 water, a bag of pet food or rice, or exercise weights. A digital bathroom scale
 is adequate: take several readings and use their average, preferably weighing
 yourself with and without an awkward object and subtracting the averages. Enter
-the result honestly to about `0.1 lb`; extra decimal places do not make a
+the result honestly to about `0.1 lb` (or `0.05 kg`); extra decimal places do not make a
 household reference more accurate. Do not assume an overflowing nominal
 five-gallon bucket contains exactly five gallons unless its total weight was
 measured separately.
@@ -250,21 +283,68 @@ and a list of what is still unverified are in
 - If the raw value remains zero, ensure the scale is awake and the load is heavy
   enough to overcome its mechanical dead zone.
 
+## Reporting a problem
+
+Open an issue at <https://github.com/agreen/flame-king-scale/issues> and include:
+
+1. Your Home Assistant version and how the scale is reached (local adapter or
+   which ESPHome proxy).
+2. **Settings → Devices & services → Flame King Propane Scale → ⋮ → Download
+   diagnostics**. It redacts the Bluetooth address and includes the consecutive
+   failure count and last error.
+3. Debug logs covering a few poll cycles. Add this to `configuration.yaml`,
+   restart, and reproduce:
+
+   ```yaml
+   logger:
+     logs:
+       custom_components.flame_king_scale: debug
+   ```
+
+The first failed connection is logged at warning level with the reason; further
+repeats stay at debug until communication is restored.
+
 ## Development
 
 ```bash
-pip install ruff
-ruff check .
-PYTHONPATH=custom_components/flame_king_scale python -m unittest discover -s tests
+python3.13 -m venv .venv && . .venv/bin/activate
+pip install -r requirements_test.txt
+ruff check . && ruff format --check .
+pytest
 ```
 
-The pure logic (`protocol.py`, `polling.py`, `usage.py`, `discovery.py`) has no
-Home Assistant dependency and is covered by the unit tests. CI additionally runs
-HACS and hassfest validation.
+Tests cover the protocol decoder, polling and usage logic, discovery matching,
+unit conversion, the Bluetooth session loop (against a fake BLE client), the
+setup and options flows, and the entities. CI runs lint, format, and tests, plus
+HACS and hassfest validation. The brand icons under
+`custom_components/flame_king_scale/brand/` use Home Assistant's required
+`icon.png` / `icon@2x.png` names.
 
 `monitor/` is a separate Windows tool for capturing advertisements and packets
 when investigating the hardware; see [monitor/README.md](monitor/README.md).
 Changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+
+## Other projects and models
+
+Related work on this scale and similar hardware, none of which is affiliated
+with this project:
+
+- [mmiller7/ESPHome-Mod-Flame-King-Propane-Scale](https://github.com/mmiller7/ESPHome-Mod-Flame-King-Propane-Scale)
+  replaces the YSN-PS1's electronics with an ESPHome (ESP8266) board. Its teardown
+  notes on the hardware (three load cells, a separate Bluetooth radio and
+  microcontroller, load-cell drift with temperature) are worth reading if you
+  want to go beyond the stock electronics. This integration needs no
+  modification.
+- [Hackaday project 185701](https://hackaday.io/project/185701) rebuilds the
+  scale's internals with its own Bluetooth app.
+- [Senso4s BLE](https://tomevault.io/tome/ksanislo/senso4s_ble) is a Home
+  Assistant integration for a different kind of gas-cylinder level sensor, useful
+  as a comparison for decoding Bluetooth gas-level devices.
+
+The Flame King scale is also sold under other retailer listings. If you have a
+verifiably compatible model or rebrand (or one that turns out not to work),
+please let me know by [opening an issue](https://github.com/agreen/flame-king-scale/issues)
+with its name, a link to the listing, and what its Bluetooth advertisement shows.
 
 ## Credits
 

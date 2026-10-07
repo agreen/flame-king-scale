@@ -25,8 +25,9 @@ from .const import (
     CONF_TARE_WEIGHT,
     DEFAULT_OPTIONS,
 )
-from .entity import scale_device_info
+from .entity import scale_device_info, weight_unit_for
 from .protocol import TankState, calculate_tank_state
+from .units import UNIT_KG, lb_to_unit
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -34,28 +35,33 @@ class FlameKingSensorDescription(SensorEntityDescription):
     """Describe a Flame King sensor."""
 
     value_fn: Callable[[FlameKingSensor], int | float | None]
+    # "mass" and "rate" values are computed in lb and lb/h, then shown in the
+    # user's preferred unit.
+    measure: str | None = None
 
 
 SENSOR_DESCRIPTIONS = (
     FlameKingSensorDescription(
         key="gross_weight",
+        measure="mass",
         translation_key="gross_weight",
         native_unit_of_measurement=UnitOfMass.POUNDS,
         device_class=SensorDeviceClass.WEIGHT,
         icon=None,
-        value_fn=lambda entity: entity.tank_state.gross_weight_lb
-        if entity.tank_state
-        else None,
+        value_fn=lambda entity: (
+            entity.tank_state.gross_weight_lb if entity.tank_state else None
+        ),
     ),
     FlameKingSensorDescription(
         key="propane_weight",
+        measure="mass",
         translation_key="propane_weight",
         native_unit_of_measurement=UnitOfMass.POUNDS,
         device_class=SensorDeviceClass.WEIGHT,
         icon="mdi:propane-tank",
-        value_fn=lambda entity: entity.tank_state.propane_weight_lb
-        if entity.tank_state
-        else None,
+        value_fn=lambda entity: (
+            entity.tank_state.propane_weight_lb if entity.tank_state else None
+        ),
     ),
     FlameKingSensorDescription(
         key="propane_percent",
@@ -63,12 +69,13 @@ SENSOR_DESCRIPTIONS = (
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
         icon="mdi:propane-tank-outline",
-        value_fn=lambda entity: entity.tank_state.propane_percent
-        if entity.tank_state
-        else None,
+        value_fn=lambda entity: (
+            entity.tank_state.propane_percent if entity.tank_state else None
+        ),
     ),
     FlameKingSensorDescription(
         key="consumption_rate",
+        measure="rate",
         translation_key="consumption_rate",
         native_unit_of_measurement="lb/h",
         device_class=None,
@@ -97,9 +104,9 @@ SENSOR_DESCRIPTIONS = (
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
         icon=None,
-        value_fn=lambda entity: entity.manager.packet.battery
-        if entity.manager.packet
-        else None,
+        value_fn=lambda entity: (
+            entity.manager.packet.battery if entity.manager.packet else None
+        ),
     ),
     FlameKingSensorDescription(
         key="raw",
@@ -108,9 +115,9 @@ SENSOR_DESCRIPTIONS = (
         native_unit_of_measurement=None,
         device_class=None,
         icon="mdi:scale",
-        value_fn=lambda entity: entity.manager.packet.raw
-        if entity.manager.packet
-        else None,
+        value_fn=lambda entity: (
+            entity.manager.packet.raw if entity.manager.packet else None
+        ),
     ),
 )
 
@@ -143,10 +150,28 @@ class FlameKingSensor(SensorEntity):
         self.entity_description = description
         self._attr_unique_id = f"{entry.unique_id}_{description.key}"
         self._attr_translation_key = description.translation_key
-        self._attr_native_unit_of_measurement = description.native_unit_of_measurement
         self._attr_device_class = description.device_class
         self._attr_icon = description.icon
         self._attr_device_info = scale_device_info(entry)
+
+    @property
+    def _weight_unit(self) -> str:
+        """Return the unit used for weight and rate values."""
+        return weight_unit_for(self.hass, self.entry)
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        """Return the unit, following the user's weight-unit preference."""
+        match self.entity_description.measure:
+            case "mass":
+                return (
+                    UnitOfMass.KILOGRAMS
+                    if self._weight_unit == UNIT_KG
+                    else UnitOfMass.POUNDS
+                )
+            case "rate":
+                return "kg/h" if self._weight_unit == UNIT_KG else "lb/h"
+        return self.entity_description.native_unit_of_measurement
 
     @property
     def available(self) -> bool:
@@ -172,6 +197,8 @@ class FlameKingSensor(SensorEntity):
     def native_value(self) -> int | float | None:
         """Return the sensor value."""
         value = self.entity_description.value_fn(self)
+        if value is not None and self.entity_description.measure:
+            value = lb_to_unit(value, self._weight_unit)
         return round(value, 2) if isinstance(value, float) else value
 
     async def async_added_to_hass(self) -> None:

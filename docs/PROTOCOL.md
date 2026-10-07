@@ -131,7 +131,11 @@ GATT inventory and `FFE4` notifications to JSONL. See
 (`monitor/logs/` is git-ignored) because they can contain identifiers of
 unrelated nearby devices.
 
-## Credits
+## Credits and related work
 
 Earlier public reverse-engineering by Alex Whittemore and Althost2 informed this
-work.
+work. For hardware-level notes on the scale (not its Bluetooth protocol), see
+[mmiller7's ESPHome conversion](https://github.com/mmiller7/ESPHome-Mod-Flame-King-Propane-Scale),
+which reports three load cells, a separate Bluetooth radio and microcontroller,
+and load-cell drift of roughly 6–7 lb over a 30 °F change. These are that
+author's observations on their own unit and have not been reproduced here.
