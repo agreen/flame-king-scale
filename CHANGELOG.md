@@ -2,17 +2,6 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
-
-- Add an optional package-box Home Assistant package in both
-  `!include_dir_named` and `!include_dir_merge_named` formats.
-- Keep the scale calibration independent from the empty-box baseline, detect
-  package presence from normal hourly readings, and request a settled one-shot
-  reading 10 seconds after the Aqara contact sensor changes from open to
-  closed, provided the box remains closed.
-- Emit portable package-detected and package-removed events for user-owned
-  notification automations.
-
 ## 0.6.4
 
 - Clip below-zero converted gross weight to zero while retaining the raw value
