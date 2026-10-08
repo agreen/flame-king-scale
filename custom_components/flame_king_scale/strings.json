@@ -78,13 +78,14 @@
       "power": {
         "data": {
           "poll_interval_minutes": "Regular reading interval (minutes)",
-          "stability_time_minutes": "Stable time before sleep (minutes)",
+          "fast_poll_seconds": "Active reading interval (seconds)",
+          "stability_time_minutes": "Fast polling window after activity (minutes)",
           "stability_variance_percent": "Significant weight variance (% of capacity)",
           "flow_detection_seconds": "Gas-flow detection time (seconds)",
           "flow_minimum_rate_lb_per_hour": "Minimum gas-flow rate (per hour)",
           "long_use_minutes": "Long-use warning time (minutes)"
         },
-        "description": "The scale normally connects briefly at the regular interval. A significant weight change keeps it connected until readings remain within the variance and no gas flow is detected for the configured stable time. The long-use setting controls the Extended gas use binary sensor.",
+        "description": "The scale is read briefly at the regular interval. When the weight changes significantly, or gas flow is detected, it is read every active interval (at least 15 seconds) until it has been quiet for about the fast polling window. Failed readings do not count as quiet, and a few failures in a row return to the regular interval. The long-use setting controls the Extended gas use binary sensor.",
         "title": "Polling and battery"
       },
       "calibrate": {
@@ -172,13 +173,16 @@
         "name": "Reference weight"
       },
       "stability_time": {
-        "name": "Stable time before sleep"
+        "name": "Fast polling window after activity"
       },
       "stability_variance": {
         "name": "Significant weight variance"
       },
       "tare_weight": {
         "name": "Stamped tare override"
+      },
+      "fast_poll_interval": {
+        "name": "Active reading interval"
       }
     },
     "sensor": {

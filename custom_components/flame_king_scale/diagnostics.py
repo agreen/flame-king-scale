@@ -23,6 +23,8 @@ async def async_get_config_entry_diagnostics(
         "config": async_redact_data(dict(entry.data), TO_REDACT),
         "options": dict(entry.options),
         "available": manager.available,
+        "poll_mode": str(manager.poll_mode),
+        "quiet_polls": manager.planner.quiet_polls,
         "consecutive_failures": manager.consecutive_failures,
         "last_error": manager.last_error,
         "packet": {

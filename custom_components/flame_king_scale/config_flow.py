@@ -26,6 +26,7 @@ from .const import (
     CONF_AREA_ID,
     CONF_CAPACITY,
     CONF_DEVICE,
+    CONF_FAST_POLL,
     CONF_FLOW_DETECTION_TIME,
     CONF_FLOW_MIN_RATE,
     CONF_LONG_USE_TIME,
@@ -346,6 +347,9 @@ class FlameKingOptionsFlow(OptionsFlow):
                     vol.Required(
                         CONF_POLL_INTERVAL, default=current[CONF_POLL_INTERVAL]
                     ): NumberSelector(NumberSelectorConfig(min=5, max=1440, step=5)),
+                    vol.Required(
+                        CONF_FAST_POLL, default=current[CONF_FAST_POLL]
+                    ): NumberSelector(NumberSelectorConfig(min=15, max=600, step=5)),
                     vol.Required(
                         CONF_STABILITY_TIME, default=current[CONF_STABILITY_TIME]
                     ): NumberSelector(NumberSelectorConfig(min=1, max=30, step=1)),

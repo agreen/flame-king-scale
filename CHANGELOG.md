@@ -4,6 +4,18 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+- Replace the streaming session with short single-shot readings. The scale is
+  read at the regular interval while idle and at a new **active reading
+  interval** (default 60 s, minimum 15 s) after a weight change, detected gas
+  flow, or **Start live monitoring**, returning to idle after a quiet window
+  (counted in readings, at least 4). Failed readings count as neither quiet nor
+  activity, and three in a row end fast polling.
+- Give every reading a hard 30-second limit so a stuck connection cannot pile up.
+- Make **Request reading** observe-only: it shows the new value but does not
+  start fast polling or move the reference weight.
+- Make the gas-flow detection window default to 5 minutes and at least three
+  active intervals, since flow is now estimated from one reading per poll.
+- Add the poll mode and quiet-reading count to diagnostics.
 - Fix the manual **Add integration** path, which called a Home Assistant
   Bluetooth function that does not exist and failed; it now lists the scales
   Home Assistant has recently seen. Automatic discovery was unaffected.

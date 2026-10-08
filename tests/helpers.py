@@ -37,6 +37,8 @@ def make_entry(hass: HomeAssistant, system, **options: Any) -> MockConfigEntry:
         ),
         long_use=False,
         available=True,
+        poll_mode="fast",
+        planner=SimpleNamespace(quiet_polls=2),
         consecutive_failures=0,
         last_error=None,
         async_request_once=AsyncMock(),

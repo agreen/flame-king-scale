@@ -44,7 +44,9 @@ related work.
 - Accuracy is that of a household scale. Factory calibration is good for
   tracking level and refill timing, not for certified measurement.
 - Readings are only as fresh as the last connection (hourly by default), so
-  short events are seen only when the weight change wakes the integration.
+  an event is noticed at the next regular reading, then followed closely.
+- Gas use is reported about one detection window (5 minutes by default) after
+  it starts, not instantly.
 - Time remaining and consumption rate exist only during a sustained burn.
 - One Bluetooth client at a time: the phone app and Home Assistant cannot both
   be connected.
@@ -67,8 +69,8 @@ related work.
 | Gas flowing | Binary sensor | Automation trigger for active use |
 | Extended gas use | Binary sensor | On after the long-use time (default 2 h) |
 | Tank size | Select | 20 / 30 / 40 lb |
-| Request reading, Start live monitoring | Buttons | One-shot sample / hold connection open |
-| Polling, flow, and tare settings | Numbers | Configurable from the device page |
+| Request reading, Start live monitoring | Buttons | One manual reading / start active polling now |
+| Polling intervals, flow, and tare settings | Numbers | Configurable from the device page |
 | Raw zero, Raw reference, Reference weight | Numbers | Advanced calibration; disabled by default |
 
 The scale device exposes a tank-size dropdown for propane capacity. Selecting
@@ -99,21 +101,41 @@ the old unit stays as recorded.
 
 ## Battery-friendly polling
 
-The integration does not hold the Bluetooth connection open continuously. By
-default it wakes the scale every 60 minutes, collects a short sample, and
-disconnects so the hardware can return to its low-power state. If the measured
-weight changed by more than 1% of propane capacity, it streams updates until the
-load has remained within that variance for 5 minutes, then disconnects again.
-While a sustained downward trend indicates gas flow, the quiet timer keeps
-resetting. The connection closes only after both the weight and detected flow
-have been quiet for 5 minutes.
+The integration never holds the Bluetooth connection open. Each reading is a
+short connection: connect, wait for one packet, disconnect, so the scale can
+return to its low-power state. How often that happens depends on what is going
+on:
 
-The regular interval, stable time, and variance are configurable from the
-device page or **Configure → Polling and battery**. **Request reading** fetches
-one fresh sample without changing the schedule. **Start live monitoring**
-connects immediately and stays connected until the configured quiet period has
-passed; pressing it again extends that window. The most recent values remain
-available in Home Assistant while the scale sleeps.
+- **Idle:** one reading per **regular reading interval** (60 minutes by default).
+- **Active:** if a reading shows the weight changed by more than the configured
+  variance (1% of tank capacity by default), if gas flow is detected, or if you
+  press **Start live monitoring**, readings switch to the **active reading
+  interval** (60 seconds by default, never less than 15).
+- **Back to idle:** after about the **fast polling window** (5 minutes by
+  default) of consecutive readings with no significant change and no gas flow.
+  The window is turned into a number of readings (at least 4), so at the
+  defaults it is 5 readings. Failed readings do not count as quiet and do not
+  move the reference weight. Three failed readings in a row return to the
+  regular interval so an absent scale is not retried every minute.
+
+Each reading has a hard 30-second limit, and the active interval is the gap
+*after* a reading finishes, so readings never overlap and a "60 second" interval
+is slightly longer in practice. Readings that happen while the scale is idle are
+compared with the previous reading, so slow drift over an hour can still add up
+to a change.
+
+**Request reading** takes one manual reading. It updates what Home Assistant
+shows but never starts active polling and does not move the reference weight,
+so the next scheduled reading still compares against the real previous one.
+**Start live monitoring** is the same event as a scheduled reading noticing a
+change, started on demand: it starts active polling and reads immediately;
+pressing it again restarts the quiet count. The most recent values remain
+available in Home Assistant between readings.
+
+Gas flow is inferred from the trend over a **detection window** (5 minutes by
+default; always at least three active intervals). Because it needs a few
+readings, flow is reported about one window after a burn starts, however often
+you poll, so polling faster than about once a minute does not detect it sooner.
 
 The **Gas flowing** binary sensor is designed as an automation trigger. The
 **Extended gas use** binary sensor turns on after the configurable long-use

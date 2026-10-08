@@ -13,6 +13,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .bluetooth import FlameKingBluetoothManager
 from .const import (
+    CONF_FAST_POLL,
     CONF_FLOW_DETECTION_TIME,
     CONF_FLOW_MIN_RATE,
     CONF_LONG_USE_TIME,
@@ -61,6 +62,15 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=1440,
         native_step=5,
         native_unit_of_measurement=UnitOfTime.MINUTES,
+    ),
+    FlameKingNumberDescription(
+        key="fast_poll_interval",
+        translation_key="fast_poll_interval",
+        option_key=CONF_FAST_POLL,
+        native_min_value=15,
+        native_max_value=600,
+        native_step=5,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
     ),
     FlameKingNumberDescription(
         key="stability_time",

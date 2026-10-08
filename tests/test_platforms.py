@@ -51,6 +51,8 @@ async def test_diagnostics_redact_the_address(hass: HomeAssistant) -> None:
     assert result["config"]["address"] == "**REDACTED**"
     assert result["packet"] == {"raw": RAW, "battery": 77}
     assert result["consecutive_failures"] == 3
+    assert result["poll_mode"] == "fast"
+    assert result["quiet_polls"] == 2
     assert result["last_error"] == "boom"
     assert result["available"] is True
 

@@ -330,6 +330,7 @@ async def test_power_step_converts_flow_rate(hass: HomeAssistant) -> None:
         key: DEFAULT_OPTIONS[key]
         for key in (
             "poll_interval_minutes",
+            "fast_poll_seconds",
             "stability_time_minutes",
             "stability_variance_percent",
             "flow_detection_seconds",

@@ -135,3 +135,14 @@ async def test_tank_size_select_includes_custom_size(hass: HomeAssistant) -> Non
     (entity,) = (await entities(hass, entry, select)).values()
     assert "33 lb (15 kg)" in entity.options
     assert entity.current_option == "33 lb (15 kg)"
+
+
+async def test_active_reading_interval_number(hass: HomeAssistant) -> None:
+    entry = make_entry(hass, METRIC_SYSTEM)
+    interval = (await entities(hass, entry, number))["fast_poll_interval"]
+    assert interval.native_unit_of_measurement == "s"
+    assert interval.native_value == 60
+    assert interval.native_min_value == 15  # never faster than every 15 seconds
+    assert interval.native_max_value == 600
+    await interval.async_set_native_value(30)
+    assert entry.options["fast_poll_seconds"] == 30

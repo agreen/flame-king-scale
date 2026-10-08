@@ -7,10 +7,10 @@ rules:
     status: exempt
     comment: The integration registers no service actions.
   appropriate-polling:
-    status: exempt
+    status: done
     comment: >-
-      Data is pushed by the scale over Bluetooth notifications. The connection
-      schedule is deliberately battery-driven and user-configurable.
+      Hourly while idle, every minute (minimum 15 s) only while the weight is
+      changing or gas is flowing; all user-configurable.
   brands:
     status: done
   common-modules:

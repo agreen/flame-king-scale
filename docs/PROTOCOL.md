@@ -88,25 +88,38 @@ the line from two *loaded* measurements only
 
 ## Connection behaviour used by the integration
 
-This is the integration's policy, not something the scale dictates.
+This is the integration's policy, not something the scale dictates. The
+connection is never held open: every reading is connect, subscribe to `FFE4`,
+take the first valid packet, disconnect, all inside a 30-second limit.
 
-1. Every *regular reading interval* (default 60 min) connect, subscribe, and
-   wait up to 15 s for the first packet.
-2. Compare it with the previous session's reading. If it moved by more than the
-   configured variance (default 1 % of tank capacity, converted to raw counts),
-   or a further 10 s of sampling shows such a change, keep streaming.
-3. Stay connected until the weight has been within the variance — and no gas
-   flow is detected — for the stable time (default 5 min), capped at 24 h.
-4. Disconnect so the scale can return to its low-power state.
+| Situation | Gap before the next reading |
+| --- | --- |
+| Idle (default) | regular interval, 60 min |
+| Weight moved by more than the variance (1 % of capacity), gas flow detected, or *Start live monitoring* pressed | active interval, 60 s (minimum 15 s) |
+| Fast polling and the window has been quiet | back to idle |
 
-*Request reading* does steps 1 then disconnects. *Start live monitoring* skips
-the change check and holds the connection for the full quiet period.
+- *Quiet* means a successful reading with no significant change and no detected
+  flow. The window (default 5 min) becomes `max(4, ceil(window / (gap + ~5 s)))`
+  readings, so 5 at the defaults.
+- A failed reading is neutral: it is not quiet, and it does not move the
+  reference weight. Three in a row end fast polling.
+- The reference weight for "significant change" stays fixed during fast
+  polling, so slow drift accumulates until it crosses the variance. While idle
+  it is the previous reading.
+- Fast polling is capped at 24 hours as a safety net.
+- A manual *Request reading* is observe-only: it never starts fast polling and
+  never moves the reference weight or feeds the flow estimate.
 
-Gas flow is inferred from the stream, not reported by the scale: over a window
-of at least the detection time (default 60 s) the window is split into thirds
-and the median propane weight must fall from first to middle to last third, at
-a rate of at least the minimum (default 0.5 lb/h). Requiring both steps to fall
-keeps a single bump or lifted tank from registering as use.
+Gas flow is inferred from the readings, not reported by the scale: over a window
+of at least the detection time (default 5 min, and never less than three
+active intervals) the window is split into thirds and the median propane weight
+must fall from first to middle to last third, at a rate of at least the minimum
+(default 0.5 lb/h). Requiring both steps to fall keeps a single bump or lifted
+tank from registering as use. With the scale's 1/256 kg resolution, simulated
+burners from about 0.5 to 1.7 lb/h are detected roughly one window plus a
+reading after they start, and a 30-second gap detects no sooner than a 60-second
+one (`tests/test_usage.py`). This assumes the readings are not noisy, which has
+not been measured on a real scale.
 
 ## Not yet documented
 
