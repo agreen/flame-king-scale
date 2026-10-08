@@ -13,3 +13,8 @@ tools/
 # Local state created by the standalone Windows BLE monitor.
 monitor/.venv/
 monitor/logs/
+
+# Test coverage output.
+.coverage
+.coverage.*
+htmlcov/
