@@ -170,19 +170,37 @@ selection field to configure or maintain.
 
 ## Install with HACS
 
-Until this repository is included in the default HACS catalog:
+This integration is distributed through [HACS](https://hacs.xyz/) as a custom
+repository. If you do not have HACS yet, install it first by following the
+[HACS setup guide](https://hacs.xyz/docs/use/).
 
 [![Open your Home Assistant instance and add this repository to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=agreen&repository=flame-king-scale&category=integration)
 
-1. In HACS, open **Integrations**.
-2. Open the menu and choose **Custom repositories**.
-3. Add this repository URL and choose **Integration**.
-4. Install **Flame King Propane Scale** and restart Home Assistant.
-5. Turn on the scale. Home Assistant should discover `Gas Monitor` automatically.
+The button above opens the dialog in your Home Assistant. To do it by hand:
 
-Manual installation is also supported: copy
-`custom_components/flame_king_scale` into Home Assistant's
-`/config/custom_components/` directory and restart.
+1. In Home Assistant, open **HACS**.
+2. Click the **⋮** menu (top right) and choose **Custom repositories**.
+3. Paste `https://github.com/agreen/flame-king-scale`, set the type to
+   **Integration**, and click **Add**.
+4. Search HACS for **Flame King Propane Scale**, open it, and click
+   **Download** (the latest release is selected by default).
+5. **Restart Home Assistant** when HACS asks.
+6. Turn on the scale and close the Flame King app. Home Assistant should
+   discover `Gas Monitor` under **Settings → Devices & services**; if it does
+   not, see [Set up](#set-up).
+
+### Updating
+
+HACS notifies you in its dashboard when a new release is published. Open the
+integration in HACS, click **Update**, and restart Home Assistant. Release notes
+are on the [Releases page](https://github.com/agreen/flame-king-scale/releases)
+and in [CHANGELOG.md](CHANGELOG.md).
+
+### Manual installation
+
+Copy the `custom_components/flame_king_scale` folder from the
+[latest release](https://github.com/agreen/flame-king-scale/releases/latest)
+into Home Assistant's `/config/custom_components/` directory and restart.
 
 ## Set up
 
