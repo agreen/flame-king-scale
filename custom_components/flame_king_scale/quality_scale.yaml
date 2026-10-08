@@ -133,4 +133,5 @@ rules:
     status: exempt
     comment: No HTTP client is used.
   strict-typing:
-    status: todo
+    status: done
+    comment: The package passes `mypy --strict`, which CI enforces.

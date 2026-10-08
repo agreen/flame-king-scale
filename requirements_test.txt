@@ -3,6 +3,7 @@
 # bluetooth component requires, pinned to the versions the tests were run with.
 pytest-homeassistant-custom-component
 ruff
+mypy
 aiousbwatcher
 pyserial
 bleak==2.1.1

@@ -337,6 +337,7 @@ repeats stay at debug until communication is restored.
 python3.13 -m venv .venv && . .venv/bin/activate
 pip install -r requirements_test.txt
 ruff check . && ruff format --check .
+mypy
 pytest
 ```
 

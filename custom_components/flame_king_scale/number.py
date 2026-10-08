@@ -155,6 +155,7 @@ class FlameKingNumber(NumberEntity):
     """A writable scale or tank configuration value."""
 
     entity_description: FlameKingNumberDescription
+    manager: FlameKingBluetoothManager
     _attr_entity_category = EntityCategory.CONFIG
     _attr_has_entity_name = True
     _attr_should_poll = False
@@ -197,12 +198,14 @@ class FlameKingNumber(NumberEntity):
     @property
     def native_min_value(self) -> float:
         """Return the minimum in the displayed unit."""
-        return round(self._to_display(self.entity_description.native_min_value), 3)
+        minimum = self.entity_description.native_min_value
+        return round(self._to_display(0.0 if minimum is None else minimum), 3)
 
     @property
     def native_max_value(self) -> float:
         """Return the maximum in the displayed unit."""
-        return round(self._to_display(self.entity_description.native_max_value), 3)
+        maximum = self.entity_description.native_max_value
+        return round(self._to_display(100.0 if maximum is None else maximum), 3)
 
     @property
     def native_value(self) -> float:

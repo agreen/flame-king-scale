@@ -14,6 +14,7 @@ from homeassistant.helpers.selector import (
     AreaSelector,
     NumberSelector,
     NumberSelectorConfig,
+    SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
     TextSelector,
@@ -62,7 +63,7 @@ def _tank_size_selector() -> SelectSelector:
     return SelectSelector(
         SelectSelectorConfig(
             options=[
-                {"value": f"{value:g}", "label": format_tank_size(value)}
+                SelectOptionDict(value=f"{value:g}", label=format_tank_size(value))
                 for value in TANK_CAPACITY_OPTIONS
             ],
             custom_value=True,
@@ -99,7 +100,7 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
     def _unit(self) -> str:
         """Return the weight unit implied by the system unit setting."""
         return resolve_weight_unit(
-            DEFAULT_OPTIONS[CONF_WEIGHT_UNIT],
+            str(DEFAULT_OPTIONS[CONF_WEIGHT_UNIT]),
             is_metric=self.hass.config.units is METRIC_SYSTEM,
         )
 
@@ -242,10 +243,10 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         options = [
-            {
-                "value": address,
-                "label": f"{info.name or DEVICE_NAME} ({address})",
-            }
+            SelectOptionDict(
+                value=address,
+                label=f"{info.name or DEVICE_NAME} ({address})",
+            )
             for address, info in sorted(candidates.items())
         ]
         return self.async_show_form(
@@ -293,7 +294,7 @@ class FlameKingOptionsFlow(OptionsFlow):
         manager = self.config_entry.runtime_data
         if not manager.available or manager.packet is None:
             return None
-        return manager.packet.raw
+        return int(manager.packet.raw)
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

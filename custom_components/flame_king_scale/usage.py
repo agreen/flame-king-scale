@@ -48,7 +48,7 @@ class PropaneUsageTracker:
 
         rate = self._trend_rate(detection_seconds)
         flowing = rate is not None and rate >= minimum_rate_lb_per_hour
-        if flowing:
+        if flowing and rate is not None:
             if self._flow_started is None:
                 self._flow_started = timestamp - detection_seconds
             self._smoothed_rate = (

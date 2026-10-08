@@ -14,6 +14,7 @@ All notable changes to this project are documented here.
 - Raise test coverage to 96% (config flow fully covered) and add a
   `quality_scale.yaml` tracking progress against Home Assistant's quality scale.
 - Document how to remove the integration.
+- Pass `mypy --strict` and enforce it in CI.
 
 ## 0.7.0
 

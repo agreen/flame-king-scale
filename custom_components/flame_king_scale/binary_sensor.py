@@ -56,6 +56,7 @@ class FlameKingBinarySensor(BinarySensorEntity):
     """A propane-use state reported by the Bluetooth manager."""
 
     _attr_has_entity_name = True
+    entity_description: FlameKingBinarySensorDescription
 
     def __init__(
         self,
@@ -71,7 +72,7 @@ class FlameKingBinarySensor(BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return the detected state."""
-        return self.entity_description.value_fn(self.manager)
+        return bool(self.entity_description.value_fn(self.manager))
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to manager updates."""

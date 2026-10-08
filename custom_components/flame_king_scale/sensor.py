@@ -136,6 +136,7 @@ class FlameKingSensor(SensorEntity):
     """A sensor backed by Flame King Bluetooth notifications."""
 
     entity_description: FlameKingSensorDescription
+    manager: FlameKingBluetoothManager
     _attr_has_entity_name = True
 
     def __init__(
