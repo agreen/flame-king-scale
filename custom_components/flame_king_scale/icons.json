@@ -1,0 +1,77 @@
+{
+  "entity": {
+    "sensor": {
+      "propane_weight": {
+        "default": "mdi:propane-tank"
+      },
+      "propane_percent": {
+        "default": "mdi:propane-tank-outline"
+      },
+      "consumption_rate": {
+        "default": "mdi:fire"
+      },
+      "estimated_time_remaining": {
+        "default": "mdi:timer-outline"
+      },
+      "gas_use_duration": {
+        "default": "mdi:timer-sand"
+      },
+      "raw": {
+        "default": "mdi:scale"
+      }
+    },
+    "number": {
+      "tare_weight": {
+        "default": "mdi:weight"
+      },
+      "poll_interval": {
+        "default": "mdi:timer-sync-outline"
+      },
+      "stability_time": {
+        "default": "mdi:timer-sand-complete"
+      },
+      "stability_variance": {
+        "default": "mdi:approximately-equal"
+      },
+      "flow_detection_time": {
+        "default": "mdi:chart-timeline-variant"
+      },
+      "minimum_flow_rate": {
+        "default": "mdi:fire-alert"
+      },
+      "long_use_time": {
+        "default": "mdi:timer-alert-outline"
+      },
+      "reference_weight": {
+        "default": "mdi:weight-kilogram"
+      },
+      "raw_zero": {
+        "default": "mdi:ray-start-arrow"
+      },
+      "raw_reference": {
+        "default": "mdi:ray-end-arrow"
+      }
+    },
+    "binary_sensor": {
+      "gas_flowing": {
+        "default": "mdi:fire"
+      },
+      "extended_gas_use": {
+        "default": "mdi:timer-alert-outline"
+      }
+    },
+    "select": {
+      "tank_size": {
+        "default": "mdi:propane-tank"
+      }
+    },
+    "button": {
+      "refresh": {
+        "default": "mdi:scale-bathroom"
+      },
+      "live_monitor": {
+        "default": "mdi:access-point"
+      }
+    }
+  }
+}

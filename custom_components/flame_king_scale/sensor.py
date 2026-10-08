@@ -10,6 +10,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfMass, UnitOfTime
@@ -29,6 +30,8 @@ from .entity import scale_device_info, weight_unit_for
 from .protocol import TankState, calculate_tank_state
 from .units import UNIT_KG, lb_to_unit
 
+PARALLEL_UPDATES = 0
+
 
 @dataclass(frozen=True, kw_only=True)
 class FlameKingSensorDescription(SensorEntityDescription):
@@ -45,9 +48,9 @@ SENSOR_DESCRIPTIONS = (
         key="gross_weight",
         measure="mass",
         translation_key="gross_weight",
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfMass.POUNDS,
         device_class=SensorDeviceClass.WEIGHT,
-        icon=None,
         value_fn=lambda entity: (
             entity.tank_state.gross_weight_lb if entity.tank_state else None
         ),
@@ -56,9 +59,9 @@ SENSOR_DESCRIPTIONS = (
         key="propane_weight",
         measure="mass",
         translation_key="propane_weight",
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfMass.POUNDS,
         device_class=SensorDeviceClass.WEIGHT,
-        icon="mdi:propane-tank",
         value_fn=lambda entity: (
             entity.tank_state.propane_weight_lb if entity.tank_state else None
         ),
@@ -66,9 +69,9 @@ SENSOR_DESCRIPTIONS = (
     FlameKingSensorDescription(
         key="propane_percent",
         translation_key="propane_percent",
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
-        icon="mdi:propane-tank-outline",
         value_fn=lambda entity: (
             entity.tank_state.propane_percent if entity.tank_state else None
         ),
@@ -79,7 +82,6 @@ SENSOR_DESCRIPTIONS = (
         translation_key="consumption_rate",
         native_unit_of_measurement="lb/h",
         device_class=None,
-        icon="mdi:fire",
         value_fn=lambda entity: entity.manager.usage.rate_lb_per_hour,
     ),
     FlameKingSensorDescription(
@@ -87,7 +89,6 @@ SENSOR_DESCRIPTIONS = (
         translation_key="estimated_time_remaining",
         native_unit_of_measurement=UnitOfTime.HOURS,
         device_class=SensorDeviceClass.DURATION,
-        icon="mdi:timer-outline",
         value_fn=lambda entity: entity.manager.usage.estimated_hours_remaining,
     ),
     FlameKingSensorDescription(
@@ -95,15 +96,14 @@ SENSOR_DESCRIPTIONS = (
         translation_key="gas_use_duration",
         native_unit_of_measurement=UnitOfTime.MINUTES,
         device_class=SensorDeviceClass.DURATION,
-        icon="mdi:timer-sand",
         value_fn=lambda entity: entity.manager.usage.duration_minutes,
     ),
     FlameKingSensorDescription(
         key="battery",
         translation_key="battery",
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
-        icon=None,
         value_fn=lambda entity: (
             entity.manager.packet.battery if entity.manager.packet else None
         ),
@@ -114,7 +114,6 @@ SENSOR_DESCRIPTIONS = (
         entity_category=EntityCategory.DIAGNOSTIC,
         native_unit_of_measurement=None,
         device_class=None,
-        icon="mdi:scale",
         value_fn=lambda entity: (
             entity.manager.packet.raw if entity.manager.packet else None
         ),
@@ -151,7 +150,6 @@ class FlameKingSensor(SensorEntity):
         self._attr_unique_id = f"{entry.unique_id}_{description.key}"
         self._attr_translation_key = description.translation_key
         self._attr_device_class = description.device_class
-        self._attr_icon = description.icon
         self._attr_device_info = scale_device_info(entry)
 
     @property

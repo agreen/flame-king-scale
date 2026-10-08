@@ -24,9 +24,12 @@ from .const import (
     CONF_STABILITY_VARIANCE,
     CONF_TARE_WEIGHT,
     DEFAULT_OPTIONS,
+    DOMAIN,
 )
 from .entity import scale_device_info, weight_unit_for
 from .units import UNIT_KG, lb_to_unit, unit_to_lb
+
+PARALLEL_UPDATES = 0
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -49,7 +52,6 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=500,
         native_step=0.01,
         native_unit_of_measurement=UnitOfMass.POUNDS,
-        icon="mdi:weight",
     ),
     FlameKingNumberDescription(
         key="poll_interval",
@@ -59,7 +61,6 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=1440,
         native_step=5,
         native_unit_of_measurement=UnitOfTime.MINUTES,
-        icon="mdi:timer-sync-outline",
     ),
     FlameKingNumberDescription(
         key="stability_time",
@@ -69,7 +70,6 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=30,
         native_step=1,
         native_unit_of_measurement=UnitOfTime.MINUTES,
-        icon="mdi:timer-sand-complete",
     ),
     FlameKingNumberDescription(
         key="stability_variance",
@@ -79,7 +79,6 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=10,
         native_step=0.1,
         native_unit_of_measurement=PERCENTAGE,
-        icon="mdi:approximately-equal",
     ),
     FlameKingNumberDescription(
         key="flow_detection_time",
@@ -89,7 +88,6 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=600,
         native_step=15,
         native_unit_of_measurement=UnitOfTime.SECONDS,
-        icon="mdi:chart-timeline-variant",
     ),
     FlameKingNumberDescription(
         key="minimum_flow_rate",
@@ -100,7 +98,6 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=20,
         native_step=0.1,
         native_unit_of_measurement="lb/h",
-        icon="mdi:fire-alert",
     ),
     FlameKingNumberDescription(
         key="long_use_time",
@@ -110,7 +107,6 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=1440,
         native_step=5,
         native_unit_of_measurement=UnitOfTime.MINUTES,
-        icon="mdi:timer-alert-outline",
     ),
     FlameKingNumberDescription(
         key="reference_weight",
@@ -121,7 +117,6 @@ NUMBER_DESCRIPTIONS = (
         native_max_value=500,
         native_step=0.01,
         native_unit_of_measurement=UnitOfMass.POUNDS,
-        icon="mdi:weight-kilogram",
         entity_registry_enabled_default=False,
     ),
     FlameKingNumberDescription(
@@ -131,7 +126,6 @@ NUMBER_DESCRIPTIONS = (
         native_min_value=-65535,
         native_max_value=65535,
         native_step=1,
-        icon="mdi:ray-start-arrow",
         entity_registry_enabled_default=False,
     ),
     FlameKingNumberDescription(
@@ -141,7 +135,6 @@ NUMBER_DESCRIPTIONS = (
         native_min_value=0,
         native_max_value=65535,
         native_step=1,
-        icon="mdi:ray-end-arrow",
         entity_registry_enabled_default=False,
     ),
 )
@@ -231,7 +224,10 @@ class FlameKingNumber(NumberEntity):
                 CONF_RAW_REFERENCE if option_key == CONF_RAW_ZERO else CONF_RAW_ZERO
             )
             if new_value == options[other_key]:
-                raise HomeAssistantError("Raw zero and raw reference must be different")
+                raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="raw_points_equal",
+                )
         options[option_key] = new_value
         self.hass.config_entries.async_update_entry(self.entry, options=options)
 

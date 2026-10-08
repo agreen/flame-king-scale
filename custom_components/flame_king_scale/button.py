@@ -10,6 +10,8 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .bluetooth import FlameKingBluetoothManager
 from .entity import scale_device_info
 
+PARALLEL_UPDATES = 1
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -27,7 +29,6 @@ class FlameKingRefreshButton(ButtonEntity):
 
     _attr_has_entity_name = True
     _attr_translation_key = "refresh"
-    _attr_icon = "mdi:scale-bathroom"
 
     def __init__(self, entry: ConfigEntry[FlameKingBluetoothManager]) -> None:
         """Initialize the button."""
@@ -45,7 +46,6 @@ class FlameKingLiveMonitorButton(ButtonEntity):
 
     _attr_has_entity_name = True
     _attr_translation_key = "live_monitor"
-    _attr_icon = "mdi:access-point"
 
     def __init__(self, entry: ConfigEntry[FlameKingBluetoothManager]) -> None:
         """Initialize the button."""

@@ -196,6 +196,14 @@ integration in HACS, click **Update**, and restart Home Assistant. Release notes
 are on the [Releases page](https://github.com/agreen/flame-king-scale/releases)
 and in [CHANGELOG.md](CHANGELOG.md).
 
+### Removing the integration
+
+1. Go to **Settings → Devices & services → Flame King Propane Scale**, open the
+   **⋮** menu on the scale's entry, and choose **Delete**. This removes the
+   device and all of its entities.
+2. Optional: in HACS, open the integration, choose **⋮ → Remove**, and restart
+   Home Assistant to delete the files.
+
 ### Manual installation
 
 Copy the `custom_components/flame_king_scale` folder from the
@@ -206,8 +214,9 @@ into Home Assistant's `/config/custom_components/` directory and restart.
 
 1. Go to **Settings → Devices & services** and accept the discovered Flame King
    scale. If discovery does not appear, choose **Add integration** and search for
-   **Flame King Propane Scale**. The setup flow performs an active scan and finds
-   the scale; it never asks you to type a Bluetooth address. Candidates must use
+   **Flame King Propane Scale**. The setup flow looks through the Bluetooth devices
+   Home Assistant has recently seen and finds the scale (turn it on first); it
+   never asks you to type a Bluetooth address. Candidates must use
    the exact `Gas Monitor` name and, when advertised, the `FFE0` service UUID.
    On connection the integration verifies the `FFE0` service and `FFE4`
    notification characteristic before accepting scale packets. The discovery

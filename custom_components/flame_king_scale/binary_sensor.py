@@ -17,6 +17,8 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .bluetooth import FlameKingBluetoothManager
 from .entity import scale_device_info
 
+PARALLEL_UPDATES = 0
+
 
 @dataclass(frozen=True, kw_only=True)
 class FlameKingBinarySensorDescription(BinarySensorEntityDescription):
@@ -30,14 +32,12 @@ DESCRIPTIONS = (
         key="gas_flowing",
         translation_key="gas_flowing",
         device_class=BinarySensorDeviceClass.RUNNING,
-        icon="mdi:fire",
         value_fn=lambda manager: manager.usage.flowing,
     ),
     FlameKingBinarySensorDescription(
         key="extended_gas_use",
         translation_key="extended_gas_use",
         device_class=BinarySensorDeviceClass.PROBLEM,
-        icon="mdi:timer-alert-outline",
         value_fn=lambda manager: manager.long_use,
     ),
 )

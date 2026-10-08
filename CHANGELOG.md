@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+- Fix the manual **Add integration** path, which called a Home Assistant
+  Bluetooth function that does not exist and failed; it now lists the scales
+  Home Assistant has recently seen. Automatic discovery was unaffected.
+- Keep long-term statistics for battery, weight, and propane percentage
+  (`state_class: measurement`), so battery drain can be tracked over time.
+- Move icons to `icons.json`, make the calibration-point error translatable,
+  and declare `PARALLEL_UPDATES`.
+- Raise test coverage to 96% (config flow fully covered) and add a
+  `quality_scale.yaml` tracking progress against Home Assistant's quality scale.
+- Document how to remove the integration.
+
 ## 0.7.0
 
 - Show weights in pounds or kilograms. The new **Display unit** option (Configure

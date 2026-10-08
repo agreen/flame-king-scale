@@ -1,0 +1,136 @@
+# Progress against Home Assistant's integration quality scale:
+# https://developers.home-assistant.io/docs/core/integration-quality-scale/rules/
+# Statuses: done, todo, or exempt (with a comment explaining why).
+rules:
+  # Bronze
+  action-setup:
+    status: exempt
+    comment: The integration registers no service actions.
+  appropriate-polling:
+    status: exempt
+    comment: >-
+      Data is pushed by the scale over Bluetooth notifications. The connection
+      schedule is deliberately battery-driven and user-configurable.
+  brands:
+    status: done
+  common-modules:
+    status: done
+  config-flow-test-coverage:
+    status: done
+  config-flow:
+    status: done
+  dependency-transparency:
+    status: todo
+    comment: >-
+      Protocol parsing lives in this package rather than a published library.
+  docs-actions:
+    status: exempt
+    comment: No service actions.
+  docs-high-level-description:
+    status: done
+  docs-installation-instructions:
+    status: done
+  docs-removal-instructions:
+    status: done
+  entity-event-setup:
+    status: done
+  entity-unique-id:
+    status: done
+  has-entity-name:
+    status: done
+  runtime-data:
+    status: done
+  test-before-configure:
+    status: todo
+    comment: >-
+      Setup relies on discovery and does not yet open a connection to verify the
+      GATT service. Needs testing on real hardware, because the scale sleeps.
+  test-before-setup:
+    status: todo
+    comment: >-
+      Setup does not raise ConfigEntryNotReady: the scale is usually asleep, so
+      it would look broken. Needs a design decision.
+  unique-config-entry:
+    status: done
+
+  # Silver
+  action-exceptions:
+    status: exempt
+    comment: No service actions.
+  config-entry-unloading:
+    status: done
+  docs-configuration-parameters:
+    status: done
+  docs-installation-parameters:
+    status: done
+  entity-unavailable:
+    status: done
+    comment: Last known values stay available while the scale sleeps, by design.
+  integration-owner:
+    status: done
+  log-when-unavailable:
+    status: done
+  parallel-updates:
+    status: done
+  reauthentication-flow:
+    status: exempt
+    comment: The device needs no credentials.
+  test-coverage:
+    status: done
+
+  # Gold
+  devices:
+    status: done
+  diagnostics:
+    status: done
+  discovery-update-info:
+    status: exempt
+    comment: Bluetooth devices have no network address to update.
+  discovery:
+    status: done
+  docs-data-update:
+    status: done
+  docs-examples:
+    status: done
+  docs-known-limitations:
+    status: done
+  docs-supported-devices:
+    status: done
+  docs-supported-functions:
+    status: done
+  docs-troubleshooting:
+    status: done
+  docs-use-cases:
+    status: todo
+  dynamic-devices:
+    status: exempt
+    comment: One scale per config entry.
+  entity-category:
+    status: done
+  entity-device-class:
+    status: done
+  entity-disabled-by-default:
+    status: done
+  entity-translations:
+    status: done
+  exception-translations:
+    status: done
+  icon-translations:
+    status: done
+  reconfiguration-flow:
+    status: todo
+  repair-issues:
+    status: todo
+  stale-devices:
+    status: exempt
+    comment: One scale per config entry.
+
+  # Platinum
+  async-dependency:
+    status: todo
+    comment: No separate dependency library yet.
+  inject-websession:
+    status: exempt
+    comment: No HTTP client is used.
+  strict-typing:
+    status: todo

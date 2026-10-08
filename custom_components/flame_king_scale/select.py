@@ -18,6 +18,8 @@ from .const import (
 from .entity import scale_device_info
 from .units import format_tank_size
 
+PARALLEL_UPDATES = 0
+
 
 def _capacity_label(capacity: float) -> str:
     """Format a propane capacity for the dropdown, for example ``20 lb (9 kg)``."""
@@ -38,7 +40,6 @@ class FlameKingTankSizeSelect(SelectEntity):
 
     _attr_has_entity_name = True
     _attr_translation_key = "tank_size"
-    _attr_icon = "mdi:propane-tank"
 
     def __init__(self, entry: ConfigEntry[FlameKingBluetoothManager]) -> None:
         """Initialize the selector."""

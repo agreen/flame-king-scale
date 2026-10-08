@@ -30,7 +30,7 @@
         "data": {
           "device": "Discovered scale"
         },
-        "description": "Home Assistant actively scans for a Gas Monitor advertisement and validates its Flame King Bluetooth fingerprint. No address entry is required. Submit to scan again.",
+        "description": "Home Assistant looks through the Bluetooth devices it has recently seen for a Gas Monitor and checks its Flame King fingerprint. No address entry is required. Turn on the scale, close any app connected to it, and submit to look again.",
         "title": "Find Flame King propane scale"
       }
     }
@@ -223,6 +223,11 @@
         "lb": "Pounds (lb)",
         "kg": "Kilograms (kg)"
       }
+    }
+  },
+  "exceptions": {
+    "raw_points_equal": {
+      "message": "Raw zero and raw reference must be different."
     }
   }
 }

@@ -182,3 +182,148 @@ async def test_silent_scale_times_out(manager) -> None:
         await manager._async_poll_session()
     assert "no valid packet" in (manager.last_error or "")
     assert client.disconnected
+
+
+# --- control surface and housekeeping ---------------------------------------
+
+
+async def test_listeners_are_notified_and_removable(manager) -> None:
+    calls: list[int] = []
+    remove = manager.async_add_listener(lambda: calls.append(1))
+    manager.async_notify_listeners()
+    assert calls == [1]
+    assert manager._poll_requested.is_set()  # config changes request a poll
+    remove()
+    manager.async_notify_listeners()
+    assert calls == [1]
+
+
+async def test_long_use_requires_flowing_and_duration(manager) -> None:
+    from custom_components.flame_king_scale.usage import UsageState
+
+    manager._usage._state = UsageState(True, 1.0, 5.0, 130.0)
+    assert manager.long_use
+    manager._usage._state = UsageState(True, 1.0, 5.0, 10.0)
+    assert not manager.long_use
+    manager._usage._state = UsageState(False, None, None, 500.0)
+    assert not manager.long_use
+
+
+async def test_trigger_poll_is_ignored_during_a_session(manager) -> None:
+    manager._session_active = True
+    manager.async_trigger_poll()
+    assert not manager._poll_requested.is_set()
+    manager._session_active = False
+    manager.async_trigger_poll()
+    assert manager._poll_requested.is_set()
+
+
+async def deliver_later(manager, raw: int, delay: float = 0.02) -> None:
+    await asyncio.sleep(delay)
+    manager._notification_handler(None, bytearray(packet(raw)))
+
+
+async def test_refresh_once_and_live_requests(manager) -> None:
+    task = asyncio.create_task(deliver_later(manager, 111))
+    result = await manager.async_request_refresh(timeout=1)
+    await task
+    assert result.raw == 111
+
+    task = asyncio.create_task(deliver_later(manager, 222))
+    result = await manager.async_request_once(timeout=1)
+    await task
+    assert result.raw == 222
+    assert manager._one_shot_requested
+
+    task = asyncio.create_task(deliver_later(manager, 333))
+    result = await manager.async_start_live_monitoring(timeout=1)
+    await task
+    assert result.raw == 333
+    assert manager._live_monitor_requested.is_set()
+
+
+async def test_request_times_out_without_a_packet(manager) -> None:
+    assert await manager.async_request_refresh(timeout=0.05) is None
+
+
+async def test_one_shot_not_flagged_during_active_session(manager) -> None:
+    manager._session_active = True
+    await manager.async_request_once(timeout=0.01)
+    assert not manager._one_shot_requested
+
+
+async def test_disconnect_callback_marks_unavailable(manager) -> None:
+    manager.available = True
+    manager._disconnected_callback(None)
+    assert not manager.available
+    assert manager._disconnected.is_set()
+
+
+async def test_usage_update_ignores_missing_packet(manager) -> None:
+    manager.packet = None
+    manager._update_usage()  # must not raise
+    assert not manager.usage.flowing
+
+
+async def test_wait_for_next_poll_wakes_on_request_or_stop(manager) -> None:
+    manager.async_trigger_poll()
+    assert await manager._async_wait_for_next_poll() is True
+
+    manager._poll_requested.clear()
+    manager._stop.set()
+    assert await manager._async_wait_for_next_poll() is False
+
+
+async def test_wait_for_next_poll_times_out(hass: HomeAssistant, manager) -> None:
+    hass.config_entries.async_update_entry(
+        manager._entry, options={"poll_interval_minutes": 0.0005}
+    )
+    assert await manager._async_wait_for_next_poll() is True
+
+
+async def test_connection_loop_polls_until_stopped(manager) -> None:
+    sessions = 0
+
+    async def fake_session() -> None:
+        nonlocal sessions
+        sessions += 1
+        if sessions == 2:
+            manager._stop.set()
+
+    manager._async_poll_session = fake_session
+    manager._async_wait_for_next_poll = lambda: asyncio.sleep(0, result=True)
+    await manager._connection_loop()
+    assert sessions == 2
+
+
+async def test_connection_loop_exits_when_wait_says_stop(manager) -> None:
+    sessions = 0
+
+    async def fake_session() -> None:
+        nonlocal sessions
+        sessions += 1
+
+    manager._async_poll_session = fake_session
+    manager._async_wait_for_next_poll = lambda: asyncio.sleep(0, result=False)
+    await manager._connection_loop()
+    assert sessions == 1  # the first session runs before any waiting
+
+
+async def test_start_and_stop_manage_the_background_task(manager) -> None:
+    started = asyncio.Event()
+
+    async def idle_loop() -> None:
+        started.set()
+        await asyncio.Event().wait()
+
+    manager._connection_loop = idle_loop
+    await manager.async_start()
+    await manager.async_start()  # second start is a no-op
+    await asyncio.wait_for(started.wait(), 1)
+    assert manager._task is not None
+
+    client = FakeClient([])
+    manager._client = client
+    await manager.async_stop()
+    assert manager._task is None
+    assert client.disconnected

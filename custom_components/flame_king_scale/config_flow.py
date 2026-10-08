@@ -205,13 +205,12 @@ class FlameKingConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Actively scan for supported scales without asking for an address."""
+        """Offer recently seen scales without asking for an address."""
         if user_input is not None and CONF_DEVICE in user_input:
             return await self._async_set_discovered_device(
                 self._discovered[user_input[CONF_DEVICE]]
             )
 
-        await bluetooth.async_request_active_scan(self.hass)
         configured = {
             entry.unique_id
             for entry in self._async_current_entries()
